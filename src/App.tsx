@@ -320,78 +320,31 @@ export default function App() {
       {activeTab === 'diagram' && (
         <div className="bg-white border-t border-gray-200 px-6 py-4">
           <div className="max-w-7xl mx-auto">
-            <h3 className="font-bold text-sm mb-3">📖 범례 (Legend)</h3>
-            <div className="space-y-3">
-              {/* Section Colors */}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2">섹션 색상</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded bg-blue-100 border-2 border-blue-500" />
-                    <span className="text-xs font-medium">콘솔</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded bg-cyan-100 border-2 border-cyan-500" />
-                    <span className="text-xs font-medium">API 직접 호출</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded bg-green-100 border-2 border-green-500" />
-                    <span className="text-xs font-medium">NEXT 플랫폼</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded bg-purple-100 border-2 border-purple-500" />
-                    <span className="text-xs font-medium">빌링 플랫폼</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded bg-orange-100 border-2 border-orange-500" />
-                    <span className="text-xs font-medium">OpenStack</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded bg-red-100 border-2 border-red-500" />
-                    <span className="text-xs font-medium">실패/에러</span>
-                  </div>
-                </div>
+            <h3 className="font-bold text-sm mb-3">📖 범례 (Legend) - 섹션 색상</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-blue-100 border-2 border-blue-500" />
+                <span className="text-sm font-medium">콘솔</span>
               </div>
-
-              {/* Node Types */}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2">노드 타입</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded bg-gray-100 border-2 border-gray-400" />
-                    <span className="text-xs">■ 필수 프로세스</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 bg-gray-100 border-2 border-gray-400" style={{ transform: 'rotate(45deg)' }} />
-                    <span className="text-xs">◆ 선택 항목</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-lg bg-yellow-50 border-2 border-yellow-400" />
-                    <span className="text-xs">📝 메모/노트</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium">📝 감사 로그 | 💰 과금 처리</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-cyan-100 border-2 border-cyan-500" />
+                <span className="text-sm font-medium">API 직접 호출</span>
               </div>
-
-              {/* Edge Types */}
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2">연결선 타입</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-0.5 bg-gray-400" />
-                    <span className="text-xs">━ 필수 흐름</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-0.5 border-t-2 border-dashed border-gray-400" />
-                    <span className="text-xs">╌ 선택 흐름</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-0.5 bg-blue-500" />
-                    <span className="text-xs">━ 애니메이션</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-green-100 border-2 border-green-500" />
+                <span className="text-sm font-medium">NEXT 플랫폼</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-purple-100 border-2 border-purple-500" />
+                <span className="text-sm font-medium">빌링 플랫폼</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-orange-100 border-2 border-orange-500" />
+                <span className="text-sm font-medium">OpenStack</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-red-100 border-2 border-red-500" />
+                <span className="text-sm font-medium">실패/에러</span>
               </div>
             </div>
           </div>

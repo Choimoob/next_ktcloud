@@ -61,6 +61,7 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
   const [history, setHistory] = useState<HistoryState[]>([{ nodes: initialNodes, edges: initialEdges }]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const isUndoRedoAction = useRef(false);
+  const nodeChangeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Save current state to history
   const saveToHistory = useCallback((newNodes: Node[], newEdges: Edge[]) => {
@@ -81,6 +82,33 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
     });
     setHistoryIndex((prev) => Math.min(prev + 1, 49));
   }, [historyIndex]);
+
+  // Custom nodes change handler with debounced history save
+  const handleNodesChange = useCallback((changes: any[]) => {
+    onNodesChangeInternal(changes);
+    
+    // Debounce history save for drag operations
+    const hasDragChange = changes.some((change: any) => 
+      change.type === 'position' && change.dragging === false
+    );
+    
+    if (hasDragChange) {
+      if (nodeChangeTimerRef.current) {
+        clearTimeout(nodeChangeTimerRef.current);
+      }
+      nodeChangeTimerRef.current = setTimeout(() => {
+        setNodes((currentNodes) => {
+          saveToHistory(currentNodes, edges);
+          return currentNodes;
+        });
+      }, 300);
+    }
+  }, [onNodesChangeInternal, edges, saveToHistory, setNodes]);
+
+  // Custom edges change handler
+  const handleEdgesChange = useCallback((changes: any[]) => {
+    onEdgesChangeInternal(changes);
+  }, [onEdgesChangeInternal]);
 
   // Undo
   const handleUndo = useCallback(() => {
@@ -357,8 +385,8 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChangeInternal}
-        onEdgesChange={onEdgesChangeInternal}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={handleEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
