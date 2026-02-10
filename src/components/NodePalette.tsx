@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
 interface NodePaletteProps {
   onAddNode: (nodeData: any) => void;
@@ -189,14 +190,42 @@ const nodeTemplates = [
 ];
 
 export function NodePalette({ onAddNode }: NodePaletteProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  if (isCollapsed) {
+    return (
+      <div className="w-12 bg-white border-r border-gray-300 flex flex-col items-center py-4">
+        <button
+          onClick={() => setIsCollapsed(false)}
+          className="p-2.5 bg-blue-100 hover:bg-blue-200 rounded-lg transition-all shadow-sm hover:shadow-md"
+          title="노드 팔레트 열기"
+        >
+          <ChevronRight className="w-6 h-6 text-blue-600" />
+        </button>
+        <div className="mt-4 text-xs text-gray-500 font-semibold transform rotate-90 whitespace-nowrap">
+          노드 추가
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-64 bg-white border-r border-gray-300 p-4 overflow-y-auto h-[800px]">
-      <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-        <Plus className="w-5 h-5" />
-        노드 추가
-      </h3>
+    <div className="w-64 bg-white border-r border-gray-300 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
+      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
+        <h3 className="font-bold text-lg flex items-center gap-2">
+          <Plus className="w-5 h-5" />
+          노드 추가
+        </h3>
+        <button
+          onClick={() => setIsCollapsed(true)}
+          className="p-2 bg-gray-100 hover:bg-blue-100 rounded-lg transition-all hover:shadow-md"
+          title="패널 접기"
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-700 hover:text-blue-600" />
+        </button>
+      </div>
       
-      <div className="space-y-4">
+      <div className="p-4 space-y-4">
         {nodeTemplates.map((template, idx) => (
           <div key={idx}>
             <h4 className="text-sm font-semibold text-gray-700 mb-2">
