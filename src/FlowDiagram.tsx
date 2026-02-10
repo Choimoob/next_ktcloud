@@ -1,5 +1,4 @@
-import { useCallback, useState, KeyboardEvent, useEffect } from 'react';
-import { Trash2, FolderOpen } from 'lucide-react';
+import { useCallback, useState, KeyboardEvent, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -19,6 +18,8 @@ import { ProcessNode } from './ProcessNode';
 import { DecisionNode } from './DecisionNode';
 import { NoteNode } from './NoteNode';
 import { GroupNode } from './GroupNode';
+import { Trash2, FolderOpen } from 'lucide-react';
+import { serverCreationFlowData } from '../data/serverCreationFlow';
 
 const nodeTypes: NodeTypes = {
   process: ProcessNode,
@@ -37,61 +38,73 @@ interface FlowDiagramProps {
   addNodeTrigger?: { nodeData: any; timestamp: number } | null;
   updateNodeTrigger?: { nodeId: string; newData: any; timestamp: number } | null;
   updateEdgeTrigger?: { edgeId: string; newData: any; timestamp: number } | null;
-  registerUndoRedo?: (undo: () => void, redo: () => void, save: () => void) => void;  // ← 추가
+  registerUndoRedo?: (undo: () => void, redo: () => void, save: () => void) => void;
 }
 
-const initialNodes: Node[] = [
-  {
-    id: 'user-1',
-    type: 'process',
-    position: { x: 50, y: 50 },
-    data: { 
-      label: '사용자: 서버 생성 클릭',
-      section: 'console',
-      icon: '👤'
-    },
-  },
-  {
-    id: 'api-1',
-    type: 'process',
-    position: { x: 50, y: 180 },
-    data: { 
-      label: 'API 요청 수신',
-      section: 'next-platform',
-      icon: '🔌',
-      auditLog: 'Audit: "Create Try" 기록',
-      auditStatus: 'Attempt'
-    },
-  },
-];
+// Use the server creation flow data as initial state
+const initialNodes: Node[] = serverCreationFlowData.nodes;
+const initialEdges: Edge[] = serverCreationFlowData.edges;
 
-const initialEdges: Edge[] = [
-  { 
-    id: 'e1-2', 
-    source: 'user-1', 
-    target: 'api-1', 
-    animated: true,
-    labelStyle: {
-      fill: '#374151',
-      fontSize: 10,
-      fontWeight: 600,
-    },
-    labelBgStyle: {
-      fill: '#f3f4f6',
-      stroke: '#9ca3af',
-      strokeWidth: 1,
-      fillOpacity: 0.95,
-    },
-    labelBgPadding: [6, 8] as [number, number],
-    labelBgBorderRadius: 4,
-  },
-];
+// History management
+interface HistoryState {
+  nodes: Node[];
+  edges: Edge[];
+}
 
-export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSelect, onNodesChange, onEdgesChange, addNodeTrigger, updateNodeTrigger, updateEdgeTrigger }: FlowDiagramProps) {
+export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSelect, onNodesChange, onEdgesChange, addNodeTrigger, updateNodeTrigger, updateEdgeTrigger, registerUndoRedo }: FlowDiagramProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [selectedEdges, setSelectedEdges] = useState<Edge[]>([]);
+  
+  // History for undo/redo
+  const [history, setHistory] = useState<HistoryState[]>([{ nodes: initialNodes, edges: initialEdges }]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const isUndoRedoAction = useRef(false);
+
+  // Save current state to history
+  const saveToHistory = useCallback((newNodes: Node[], newEdges: Edge[]) => {
+    if (isUndoRedoAction.current) {
+      isUndoRedoAction.current = false;
+      return;
+    }
+    
+    setHistory((prev) => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push({ nodes: newNodes, edges: newEdges });
+      // Limit history to 50 steps
+      if (newHistory.length > 50) {
+        newHistory.shift();
+        return newHistory;
+      }
+      return newHistory;
+    });
+    setHistoryIndex((prev) => Math.min(prev + 1, 49));
+  }, [historyIndex]);
+
+  // Undo
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      const state = history[newIndex];
+      isUndoRedoAction.current = true;
+      setNodes(state.nodes);
+      setEdges(state.edges);
+      setHistoryIndex(newIndex);
+    }
+  }, [historyIndex, history, setNodes, setEdges]);
+
+  // Redo
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      const state = history[newIndex];
+      isUndoRedoAction.current = true;
+      setNodes(state.nodes);
+      setEdges(state.edges);
+      setHistoryIndex(newIndex);
+    }
+  }, [historyIndex, history, setNodes, setEdges]);
 
   // Handle selection change callback
   const handleSelectionChange = useCallback(({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => {
@@ -138,8 +151,9 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         },
       };
       setNodes((nds) => [...nds, newNode]);
+      saveToHistory([...nodes, newNode], edges);
     }
-  }, [addNodeTrigger, setNodes]);
+  }, [addNodeTrigger, setNodes, nodes, edges, saveToHistory]);
 
   // Listen for update node trigger from parent
   useEffect(() => {
@@ -152,8 +166,9 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
           return node;
         })
       );
+      saveToHistory(nodes, edges);
     }
-  }, [updateNodeTrigger, setNodes]);
+  }, [updateNodeTrigger, setNodes, nodes, edges, saveToHistory]);
 
   // Listen for update edge trigger from parent
   useEffect(() => {
@@ -186,8 +201,9 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
           return edge;
         })
       );
+      saveToHistory(nodes, edges);
     }
-  }, [updateEdgeTrigger, setEdges]);
+  }, [updateEdgeTrigger, setEdges, nodes, edges, saveToHistory]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -209,8 +225,9 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         labelBgBorderRadius: 4,
       };
       setEdges((eds) => addEdge(newEdge, eds));
+      saveToHistory(nodes, [...edges, newEdge]);
     },
-    [setEdges]
+    [setEdges, nodes, edges, saveToHistory]
   );
 
   const onNodeClick = useCallback(
@@ -242,7 +259,8 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         return node;
       })
     );
-  }, [setNodes]);
+    saveToHistory(nodes, edges);
+  }, [setNodes, nodes, edges, saveToHistory]);
 
   // Delete selected node
   const deleteSelectedNode = useCallback(() => {
@@ -254,8 +272,9 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         )
       );
       onNodeSelect(null);
+      saveToHistory(nodes.filter((node) => node.id !== selectedNode.id), edges.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
     }
-  }, [selectedNode, setNodes, setEdges, onNodeSelect]);
+  }, [selectedNode, setNodes, setEdges, onNodeSelect, nodes, edges, saveToHistory]);
 
   // Delete multiple selected nodes
   const deleteMultipleNodes = useCallback(() => {
@@ -268,8 +287,9 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         )
       );
       onNodeSelect(null);
+      saveToHistory(nodes.filter((node) => !selectedNodeIds.includes(node.id)), edges.filter((edge) => !selectedNodeIds.includes(edge.source) && !selectedNodeIds.includes(edge.target)));
     }
-  }, [selectedNodes, setNodes, setEdges, onNodeSelect]);
+  }, [selectedNodes, setNodes, setEdges, onNodeSelect, nodes, edges, saveToHistory]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -279,8 +299,12 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
       } else {
         deleteSelectedNode();
       }
+    } else if (event.key === 'z' && event.ctrlKey) {
+      handleUndo();
+    } else if (event.key === 'y' && event.ctrlKey) {
+      handleRedo();
     }
-  }, [deleteSelectedNode, deleteMultipleNodes, selectedNodes]);
+  }, [deleteSelectedNode, deleteMultipleNodes, selectedNodes, handleUndo, handleRedo]);
 
   // Save/Load functions
   const handleSave = useCallback(() => {
@@ -317,9 +341,16 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
     }
   }, [setNodes, setEdges, onNodeSelect, onEdgeSelect]);
 
+  // Register undo, redo, and save functions with parent
+  useEffect(() => {
+    if (registerUndoRedo) {
+      registerUndoRedo(handleUndo, handleRedo, handleSave);
+    }
+  }, [registerUndoRedo, handleUndo, handleRedo, handleSave]);
+
   return (
     <div 
-      className="w-full h-[800px] border border-gray-300 rounded-lg bg-gray-50 relative"
+      className="w-full h-full border border-gray-300 rounded-lg bg-gray-50 relative"
       onKeyDown={handleKeyDown as any}
       tabIndex={0}
     >
@@ -328,17 +359,16 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         edges={edges}
         onNodesChange={onNodesChangeInternal}
         onEdgesChange={onEdgesChangeInternal}
-        onConnect={onConnect}defaultViewport
-        defaultViewport={{ x: 50, y: 50, zoom: 0.2 }}  // ← 변경 (이전: zoom: 0.08)
-        minZoom={0.05}  // ← 변경 (이전: 0.02)
-        maxZoom={2}
-        fitView
-        fitViewOptions={{ padding: 0.1, maxZoom: 0.25 }}  // ← 변경 (이전: 0.15)
+        onConnect={onConnect}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
+        defaultViewport={{ x: 50, y: 50, zoom: 0.2 }}
+        minZoom={0.05}
+        maxZoom={2}
         fitView
+        fitViewOptions={{ padding: 0.1, maxZoom: 0.25 }}
         selectionOnDrag={true}
         panOnDrag={[1, 2]}
         selectionMode="partial"
@@ -381,25 +411,6 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
               삭제 (Del)
             </button>
           )}
-          
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-lg"
-          >
-            <Download className="w-4 h-4" />
-            저장
-          </button>
-          
-          <label className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-lg cursor-pointer">
-            <Upload className="w-4 h-4" />
-            불러오기
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleLoad}
-              className="hidden"
-            />
-          </label>
         </Panel>
         
         {/* Info Panel - Multi-selection guide */}

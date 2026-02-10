@@ -1,44 +1,30 @@
-import { useState } from 'react';
-import { FlowDiagram } from './FlowDiagram';
+import { useState, useRef } from 'react';
+import { FlowDiagram } from './components/FlowDiagram';
 import { SpecificationTable } from './components/SpecificationTable';
 import { NodePalette } from './components/NodePalette';
 import { PropertiesPanel } from './components/PropertiesPanel';
-import { JsonEditor } from './JsonEditor'; // 👈 추가됨
+import { JsonEditor } from './components/JsonEditor';
 import { FileText, Workflow, Code2, Download, Upload, Undo, Redo } from 'lucide-react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'; // 👈 추가됨
-import type { Node, Edge } from '@xyflow/react'; // 👈 하나로 합침
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import type { Node, Edge } from '@xyflow/react';
+import { serverCreationFlowData } from './data/serverCreationFlow';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'diagram' | 'table'>('diagram');
+  const [showJsonEditor, setShowJsonEditor] = useState(false); // ✅ Start with JSON editor closed (viewing mode)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<any | null>(null);
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<any[]>([]);
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
+  const [nodes, setNodes] = useState<Node[]>(serverCreationFlowData.nodes);
+  const [edges, setEdges] = useState<Edge[]>(serverCreationFlowData.edges);
+  const [addNodeTrigger, setAddNodeTrigger] = useState<{ nodeData: any; timestamp: number } | null>(null);
+  const [updateNodeTrigger, setUpdateNodeTrigger] = useState<{ nodeId: string; newData: any; timestamp: number } | null>(null);
+  const [updateEdgeTrigger, setUpdateEdgeTrigger] = useState<{ edgeId: string; newData: any; timestamp: number } | null>(null);
+  
+  // Refs for undo/redo
   const undoRef = useRef<(() => void) | null>(null);
   const redoRef = useRef<(() => void) | null>(null);
   const saveRef = useRef<(() => void) | null>(null);
   const loadInputRef = useRef<HTMLInputElement>(null);
-  const [addNodeTrigger, setAddNodeTrigger] = useState<{ nodeData: any; timestamp: number } | null>(null);
-  const [updateNodeTrigger, setUpdateNodeTrigger] = useState<{ nodeId: string; newData: any; timestamp: number } | null>(null);
-  const [updateEdgeTrigger, setUpdateEdgeTrigger] = useState<{ edgeId: string; newData: any; timestamp: number } | null>(null);
-  const [showJsonEditor, setShowJsonEditor] = useState(false);
-  const handleJsonImport = (data: { nodes: Node[], edges: Edge[] }) => {
-  setNodes(data.nodes);
-  setEdges(data.edges);
-  setSelectedNode(null);
-  setSelectedEdge(null);
-};
-  const registerUndoRedo = (undo: () => void, redo: () => void, save: () => void) => {
-  undoRef.current = undo;
-  redoRef.current = redo;
-  saveRef.current = save;
-};
-  const handleUndo = () => { ... };
-  const handleRedo = () => { ... };
-  const handleSave = () => { ... };
-  const handleLoadClick = () => { ... };
-  const handleLoad = (event: React.ChangeEvent<HTMLInputElement>) => { ... };
-
 
   // Handler for adding nodes from palette
   const handleAddNode = (nodeData: any) => {
@@ -88,6 +74,72 @@ export default function App() {
     setUpdateEdgeTrigger({ edgeId, newData, timestamp: Date.now() });
   };
 
+  // Handler for importing JSON
+  const handleJsonImport = (data: { nodes: Node[], edges: Edge[] }) => {
+    setNodes(data.nodes);
+    setEdges(data.edges);
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  };
+
+  // Register undo/redo functions from FlowDiagram
+  const registerUndoRedo = (undo: () => void, redo: () => void, save: () => void) => {
+    undoRef.current = undo;
+    redoRef.current = redo;
+    saveRef.current = save;
+  };
+
+  // Handlers for toolbar buttons
+  const handleUndo = () => {
+    if (undoRef.current) undoRef.current();
+  };
+
+  const handleRedo = () => {
+    if (redoRef.current) redoRef.current();
+  };
+
+  const handleSave = () => {
+    if (saveRef.current) {
+      saveRef.current();
+    } else {
+      // Fallback save
+      const data = { nodes, edges };
+      const dataStr = JSON.stringify(data, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'next-server-diagram.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleLoadClick = () => {
+    loadInputRef.current?.click();
+  };
+
+  const handleLoad = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+          setNodes(data.nodes || []);
+          setEdges(data.edges || []);
+          setSelectedNode(null);
+          setSelectedEdge(null);
+        } catch (error) {
+          alert('파일을 불러오는데 실패했습니다.');
+        }
+      };
+      reader.readAsText(file);
+    }
+    // Reset input
+    if (event.target) event.target.value = '';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
@@ -102,38 +154,76 @@ export default function App() {
 
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200 px-6 py-2">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab('diagram')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-semibold transition-all ${
-              activeTab === 'diagram'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Workflow className="w-4 h-4" />
-            편집 모드
-          </button>
-           {activeTab === 'diagram' && (
+        <div className="flex gap-2 items-center justify-between">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('diagram')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-semibold transition-all ${
+                activeTab === 'diagram'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Workflow className="w-4 h-4" />
+              편집 모드
+            </button>
+            <button
+              onClick={() => setActiveTab('table')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-semibold transition-all ${
+                activeTab === 'table'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              명세표
+            </button>
+          </div>
+
+          {/* Action Buttons (only show in diagram mode) */}
+          {activeTab === 'diagram' && (
             <div className="flex gap-2">
-             <button onClick={handleUndo}>되돌리기</button>
-             <button onClick={handleRedo}>다시 실행</button>
-             <button onClick={handleSave}>저장</button>
-             <button onClick={handleLoadClick}>불러오기</button>
-             <input ref={loadInputRef} type="file" ... />
+              <button
+                onClick={handleUndo}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                title="되돌리기 (Ctrl+Z)"
+              >
+                <Undo className="w-3.5 h-3.5" />
+                되돌리기
+              </button>
+              <button
+                onClick={handleRedo}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                title="다시 실행 (Ctrl+Y)"
+              >
+                <Redo className="w-3.5 h-3.5" />
+                다시 실행
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all"
+                title="JSON 파일로 저장"
+              >
+                <Download className="w-3.5 h-3.5" />
+                저장
+              </button>
+              <button
+                onClick={handleLoadClick}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-green-100 text-green-700 hover:bg-green-200 transition-all"
+                title="JSON 파일 불러오기"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                불러오기
+              </button>
+              <input
+                ref={loadInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleLoad}
+                className="hidden"
+              />
             </div>
-            )}
-          <button
-            onClick={() => setActiveTab('table')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-semibold transition-all ${
-              activeTab === 'table'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            명세표
-          </button>
+          )}
         </div>
       </div>
 
@@ -178,6 +268,7 @@ export default function App() {
                     addNodeTrigger={addNodeTrigger}
                     updateNodeTrigger={updateNodeTrigger}
                     updateEdgeTrigger={updateEdgeTrigger}
+                    registerUndoRedo={registerUndoRedo}
                   />
                 </Panel>
 
@@ -204,7 +295,7 @@ export default function App() {
                 addNodeTrigger={addNodeTrigger}
                 updateNodeTrigger={updateNodeTrigger}
                 updateEdgeTrigger={updateEdgeTrigger}
-                registerUndoRedo={registerUndoRedo} 
+                registerUndoRedo={registerUndoRedo}
               />
             )}
           </div>
