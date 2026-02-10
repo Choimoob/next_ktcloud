@@ -1,4 +1,5 @@
 import { useCallback, useState, KeyboardEvent, useEffect } from 'react';
+import { Trash2, FolderOpen } from 'lucide-react';
 import {
   ReactFlow,
   Background,
@@ -18,7 +19,6 @@ import { ProcessNode } from './ProcessNode';
 import { DecisionNode } from './DecisionNode';
 import { NoteNode } from './NoteNode';
 import { GroupNode } from './GroupNode';
-import { Download, Upload, Trash2, FolderOpen } from 'lucide-react';
 
 const nodeTypes: NodeTypes = {
   process: ProcessNode,
@@ -37,6 +37,7 @@ interface FlowDiagramProps {
   addNodeTrigger?: { nodeData: any; timestamp: number } | null;
   updateNodeTrigger?: { nodeId: string; newData: any; timestamp: number } | null;
   updateEdgeTrigger?: { edgeId: string; newData: any; timestamp: number } | null;
+  registerUndoRedo?: (undo: () => void, redo: () => void, save: () => void) => void;  // ← 추가
 }
 
 const initialNodes: Node[] = [
@@ -327,13 +328,17 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         edges={edges}
         onNodesChange={onNodesChangeInternal}
         onEdgesChange={onEdgesChangeInternal}
-        onConnect={onConnect}
+        onConnect={onConnect}defaultViewport
+        defaultViewport={{ x: 50, y: 50, zoom: 0.2 }}  // ← 변경 (이전: zoom: 0.08)
+        minZoom={0.05}  // ← 변경 (이전: 0.02)
+        maxZoom={2}
+        fitView
+        fitViewOptions={{ padding: 0.1, maxZoom: 0.25 }}  // ← 변경 (이전: 0.15)
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
         selectionOnDrag={true}
         panOnDrag={[1, 2]}
         selectionMode="partial"

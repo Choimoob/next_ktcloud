@@ -4,7 +4,7 @@ import { SpecificationTable } from './components/SpecificationTable';
 import { NodePalette } from './components/NodePalette';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { JsonEditor } from './JsonEditor'; // 👈 추가됨
-import { FileText, Workflow, Code2 } from 'lucide-react'; // 👈 하나로 합침
+import { FileText, Workflow, Code2, Download, Upload, Undo, Redo } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'; // 👈 추가됨
 import type { Node, Edge } from '@xyflow/react'; // 👈 하나로 합침
 
@@ -14,6 +14,10 @@ export default function App() {
   const [selectedEdge, setSelectedEdge] = useState<any | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<any[]>([]);
+  const undoRef = useRef<(() => void) | null>(null);
+  const redoRef = useRef<(() => void) | null>(null);
+  const saveRef = useRef<(() => void) | null>(null);
+  const loadInputRef = useRef<HTMLInputElement>(null);
   const [addNodeTrigger, setAddNodeTrigger] = useState<{ nodeData: any; timestamp: number } | null>(null);
   const [updateNodeTrigger, setUpdateNodeTrigger] = useState<{ nodeId: string; newData: any; timestamp: number } | null>(null);
   const [updateEdgeTrigger, setUpdateEdgeTrigger] = useState<{ edgeId: string; newData: any; timestamp: number } | null>(null);
@@ -24,6 +28,16 @@ export default function App() {
   setSelectedNode(null);
   setSelectedEdge(null);
 };
+  const registerUndoRedo = (undo: () => void, redo: () => void, save: () => void) => {
+  undoRef.current = undo;
+  redoRef.current = redo;
+  saveRef.current = save;
+};
+  const handleUndo = () => { ... };
+  const handleRedo = () => { ... };
+  const handleSave = () => { ... };
+  const handleLoadClick = () => { ... };
+  const handleLoad = (event: React.ChangeEvent<HTMLInputElement>) => { ... };
 
 
   // Handler for adding nodes from palette
@@ -100,6 +114,15 @@ export default function App() {
             <Workflow className="w-4 h-4" />
             편집 모드
           </button>
+           {activeTab === 'diagram' && (
+            <div className="flex gap-2">
+             <button onClick={handleUndo}>되돌리기</button>
+             <button onClick={handleRedo}>다시 실행</button>
+             <button onClick={handleSave}>저장</button>
+             <button onClick={handleLoadClick}>불러오기</button>
+             <input ref={loadInputRef} type="file" ... />
+            </div>
+            )}
           <button
             onClick={() => setActiveTab('table')}
             className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-semibold transition-all ${
@@ -181,6 +204,7 @@ export default function App() {
                 addNodeTrigger={addNodeTrigger}
                 updateNodeTrigger={updateNodeTrigger}
                 updateEdgeTrigger={updateEdgeTrigger}
+                registerUndoRedo={registerUndoRedo} 
               />
             )}
           </div>
