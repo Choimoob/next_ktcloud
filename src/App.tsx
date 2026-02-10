@@ -3,8 +3,10 @@ import { FlowDiagram } from './FlowDiagram';
 import { SpecificationTable } from './components/SpecificationTable';
 import { NodePalette } from './components/NodePalette';
 import { PropertiesPanel } from './components/PropertiesPanel';
-import { FileText, Workflow } from 'lucide-react';
-import type { Node } from '@xyflow/react';
+import { JsonEditor } from './JsonEditor'; // 👈 추가됨
+import { FileText, Workflow, Code2 } from 'lucide-react'; // 👈 하나로 합침
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'; // 👈 추가됨
+import type { Node, Edge } from '@xyflow/react'; // 👈 하나로 합침
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'diagram' | 'table'>('diagram');
@@ -15,6 +17,14 @@ export default function App() {
   const [addNodeTrigger, setAddNodeTrigger] = useState<{ nodeData: any; timestamp: number } | null>(null);
   const [updateNodeTrigger, setUpdateNodeTrigger] = useState<{ nodeId: string; newData: any; timestamp: number } | null>(null);
   const [updateEdgeTrigger, setUpdateEdgeTrigger] = useState<{ edgeId: string; newData: any; timestamp: number } | null>(null);
+  const [showJsonEditor, setShowJsonEditor] = useState(false);
+  const handleJsonImport = (data: { nodes: Node[], edges: Edge[] }) => {
+  setNodes(data.nodes);
+  setEdges(data.edges);
+  setSelectedNode(null);
+  setSelectedEdge(null);
+};
+
 
   // Handler for adding nodes from palette
   const handleAddNode = (nodeData: any) => {
@@ -106,23 +116,73 @@ export default function App() {
 
       {/* Content */}
       {activeTab === 'diagram' ? (
-        <div className="flex">
+        <div className="flex h-[calc(100vh-200px)]">
           {/* Left Palette */}
           <NodePalette onAddNode={handleAddNode} />
 
-          {/* Center Canvas */}
-          <div className="flex-1">
-            <FlowDiagram
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              onNodeSelect={setSelectedNode}
-              onEdgeSelect={setSelectedEdge}
-              onNodesChange={setNodes}
-              onEdgesChange={setEdges}
-              addNodeTrigger={addNodeTrigger}
-              updateNodeTrigger={updateNodeTrigger}
-              updateEdgeTrigger={updateEdgeTrigger}
-            />
+          {/* Center: Diagram + JSON Editor (Resizable) */}
+          <div className="flex-1 flex flex-col">
+            {/* Toggle Button */}
+            <div className="bg-gray-100 px-4 py-2 flex items-center justify-between border-b border-gray-300">
+              <div className="text-sm text-gray-600">
+                {showJsonEditor ? '비주얼 + JSON 모드' : '비주얼 모드'}
+              </div>
+              <button
+                onClick={() => setShowJsonEditor(!showJsonEditor)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                  showJsonEditor
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                }`}
+              >
+                <Code2 className="w-4 h-4" />
+                {showJsonEditor ? 'JSON 숨기기' : 'JSON 에디터'}
+              </button>
+            </div>
+
+            {/* Resizable Panels */}
+            {showJsonEditor ? (
+              <PanelGroup direction="horizontal" className="flex-1">
+                {/* Diagram Panel */}
+                <Panel defaultSize={60} minSize={30}>
+                  <FlowDiagram
+                    selectedNode={selectedNode}
+                    selectedEdge={selectedEdge}
+                    onNodeSelect={setSelectedNode}
+                    onEdgeSelect={setSelectedEdge}
+                    onNodesChange={setNodes}
+                    onEdgesChange={setEdges}
+                    addNodeTrigger={addNodeTrigger}
+                    updateNodeTrigger={updateNodeTrigger}
+                    updateEdgeTrigger={updateEdgeTrigger}
+                  />
+                </Panel>
+
+                {/* Resize Handle */}
+                <PanelResizeHandle className="w-2 bg-gray-300 hover:bg-blue-500 transition-colors cursor-col-resize" />
+
+                {/* JSON Editor Panel */}
+                <Panel defaultSize={40} minSize={25}>
+                  <JsonEditor
+                    nodes={nodes}
+                    edges={edges}
+                    onImport={handleJsonImport}
+                  />
+                </Panel>
+              </PanelGroup>
+            ) : (
+              <FlowDiagram
+                selectedNode={selectedNode}
+                selectedEdge={selectedEdge}
+                onNodeSelect={setSelectedNode}
+                onEdgeSelect={setSelectedEdge}
+                onNodesChange={setNodes}
+                onEdgesChange={setEdges}
+                addNodeTrigger={addNodeTrigger}
+                updateNodeTrigger={updateNodeTrigger}
+                updateEdgeTrigger={updateEdgeTrigger}
+              />
+            )}
           </div>
 
           {/* Right Properties Panel */}
