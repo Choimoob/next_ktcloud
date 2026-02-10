@@ -52,15 +52,15 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
   // No selection
   if (!selectedNode && !selectedEdge) {
     return (
-      <div className="w-80 bg-white border-l border-gray-300" style={{ height: 'calc(100vh - 180px)' }}>
+      <div className="w-80 bg-white border-l border-gray-300 flex-shrink-0" style={{ height: 'calc(100vh - 180px)' }}>
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
-          <h3 className="font-bold text-lg flex items-center gap-2">
+          <h3 className="font-bold text-lg flex items-center gap-2 whitespace-nowrap">
             <Settings className="w-5 h-5" />
             속성 편집
           </h3>
           <button
             onClick={() => setIsCollapsed(true)}
-            className="p-2 bg-gray-100 hover:bg-green-100 rounded-lg transition-all hover:shadow-md"
+            className="p-2 bg-gray-100 hover:bg-green-100 rounded-lg transition-all hover:shadow-md flex-shrink-0"
             title="패널 접기"
           >
             <ChevronRight className="w-5 h-5 text-gray-700 hover:text-green-600" />

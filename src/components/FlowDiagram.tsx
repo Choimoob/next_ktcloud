@@ -12,13 +12,26 @@ import {
   type Node,
   type NodeTypes,
   Panel,
+  SelectionMode,
+  type OnNodesChange,
+  type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ProcessNode } from './ProcessNode';
 import { DecisionNode } from './DecisionNode';
 import { NoteNode } from './NoteNode';
 import { GroupNode } from './GroupNode';
-import { Trash2, FolderOpen } from 'lucide-react';
+import { HelperLines, getHelperLines, snapPosition } from './HelperLines';
+import { 
+  Trash2, 
+  FolderOpen, 
+  AlignLeft, 
+  AlignCenter, 
+  AlignRight, 
+  AlignVerticalJustifyCenter,
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalSpaceAround
+} from 'lucide-react';
 import { serverCreationFlowData } from '../data/serverCreationFlow';
 
 const nodeTypes: NodeTypes = {
@@ -39,6 +52,7 @@ interface FlowDiagramProps {
   updateNodeTrigger?: { nodeId: string; newData: any; timestamp: number } | null;
   updateEdgeTrigger?: { edgeId: string; newData: any; timestamp: number } | null;
   registerUndoRedo?: (undo: () => void, redo: () => void, save: () => void) => void;
+  registerDelete?: (deleteFunc: () => void) => void;
 }
 
 // Use the server creation flow data as initial state
@@ -61,14 +75,38 @@ export function FlowDiagram({
   addNodeTrigger,
   updateNodeTrigger,
   updateEdgeTrigger,
-  registerUndoRedo
+  registerUndoRedo,
+  registerDelete
 }: FlowDiagramProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  
+  // Helper Lines state
+  const [helperLines, setHelperLines] = useState<{ horizontal?: number; vertical?: number }>({});
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
 
   // History for undo/redo
   const [history, setHistory] = useState<HistoryState[]>([{ nodes: initialNodes, edges: initialEdges }]);
   const [historyIndex, setHistoryIndex] = useState(0);
+
+  // Track Shift key
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Shift') setIsShiftPressed(true);
+    };
+    const handleKeyUp = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Shift') setIsShiftPressed(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   // Save to history (throttled)
   const saveToHistory = useCallback(() => {
@@ -126,6 +164,35 @@ export function FlowDiagram({
     }
   }, [undo, redo, saveToFile, registerUndoRedo]);
 
+  // Listen for updateNodeData events from GroupNode
+  useEffect(() => {
+    const handleUpdateNodeData = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { nodeId, data: newData } = customEvent.detail;
+      
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === nodeId) {
+            // Update data and draggable status
+            return { 
+              ...node, 
+              data: { ...node.data, ...newData },
+              draggable: !newData.locked // 잠금 상태면 드래그 불가
+            };
+          }
+          return node;
+        })
+      );
+      saveToHistory();
+    };
+
+    window.addEventListener('updateNodeData', handleUpdateNodeData);
+    
+    return () => {
+      window.removeEventListener('updateNodeData', handleUpdateNodeData);
+    };
+  }, [setNodes, saveToHistory]);
+
   // Add node from palette trigger
   useEffect(() => {
     if (!addNodeTrigger) return;
@@ -135,9 +202,10 @@ export function FlowDiagram({
       type: addNodeTrigger.nodeData.type,
       position: { x: 300, y: 200 },
       data: { ...addNodeTrigger.nodeData.data },
-      style: addNodeTrigger.nodeData.type === 'group' 
-        ? { width: 400, height: 300, zIndex: -1 }
-        : { width: 200, height: 100 }
+      // Group 노드만 고정 크기, 나머지는 자동 크기
+      ...(addNodeTrigger.nodeData.type === 'group' && {
+        style: { width: 400, height: 300, zIndex: -1 }
+      })
     };
 
     setNodes((nds) => [...nds, newNode]);
@@ -216,21 +284,60 @@ export function FlowDiagram({
   const onPaneClick = useCallback(() => {
     onNodeSelect(null);
     onEdgeSelect(null);
+    setSelectedNodes([]);
   }, [onNodeSelect, onEdgeSelect]);
 
-  // Delete selected node/edge
+  // Selection change (다중 선택)
+  const onSelectionChange = useCallback(
+    ({ nodes: selectedNodesArray }: { nodes: Node[] }) => {
+      setSelectedNodes(selectedNodesArray);
+      
+      // Single node selected
+      if (selectedNodesArray.length === 1) {
+        onNodeSelect(selectedNodesArray[0]);
+        onEdgeSelect(null);
+      } 
+      // Multiple nodes or none
+      else {
+        onNodeSelect(null);
+        onEdgeSelect(null);
+      }
+    },
+    [onNodeSelect, onEdgeSelect]
+  );
+
+  // Delete selected node/edge or multiple nodes
   const handleDelete = useCallback(() => {
-    if (selectedNode) {
+    if (selectedNodes.length > 0) {
+      // Delete multiple selected nodes
+      const selectedNodeIds = selectedNodes.map(n => n.id);
+      setNodes((nds) => nds.filter((n) => !selectedNodeIds.includes(n.id)));
+      setEdges((eds) => eds.filter((e) => 
+        !selectedNodeIds.includes(e.source) && !selectedNodeIds.includes(e.target)
+      ));
+      setSelectedNodes([]);
+      onNodeSelect(null);
+      saveToHistory();
+    } else if (selectedNode) {
+      // Delete single node
       setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
       setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
       onNodeSelect(null);
       saveToHistory();
     } else if (selectedEdge) {
+      // Delete edge
       setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
       onEdgeSelect(null);
       saveToHistory();
     }
-  }, [selectedNode, selectedEdge, setNodes, setEdges, onNodeSelect, onEdgeSelect, saveToHistory]);
+  }, [selectedNodes, selectedNode, selectedEdge, setNodes, setEdges, onNodeSelect, onEdgeSelect, saveToHistory]);
+
+  // Register delete function
+  useEffect(() => {
+    if (registerDelete) {
+      registerDelete(handleDelete);
+    }
+  }, [handleDelete, registerDelete]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
@@ -254,9 +361,87 @@ export function FlowDiagram({
         event.preventDefault();
         saveToFile();
       }
+      // Select All: Ctrl+A / Cmd+A
+      if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+        event.preventDefault();
+        setSelectedNodes(nodes);
+      }
     },
-    [handleDelete, undo, redo, saveToFile]
+    [handleDelete, undo, redo, saveToFile, nodes]
   );
+
+  // Node drag handler (show helper lines when Shift is pressed)
+  const onNodeDrag = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (!isShiftPressed) {
+        setHelperLines({});
+        return;
+      }
+
+      const lines = getHelperLines(node, nodes, 15);
+      setHelperLines(lines);
+    },
+    [nodes, isShiftPressed]
+  );
+
+  // Node drag stop handler (snap to position if Shift was pressed)
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (isShiftPressed && (helperLines.horizontal !== undefined || helperLines.vertical !== undefined)) {
+        const snappedPosition = snapPosition(node.position, helperLines, node, 15);
+        
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id === node.id) {
+              return { ...n, position: snappedPosition };
+            }
+            return n;
+          })
+        );
+      }
+      
+      setHelperLines({});
+      saveToHistory();
+    },
+    [isShiftPressed, helperLines, setNodes, saveToHistory]
+  );
+
+  // Alignment functions for multiple nodes - 단순화: 수평/수직 정렬만
+  const alignHorizontally = useCallback(() => {
+    if (selectedNodes.length < 2) return;
+    
+    // Y축 기준으로 정렬 (가로선상에 배치)
+    const centerYs = selectedNodes.map(n => n.position.y + (n.height || 0) / 2);
+    const avgCenterY = centerYs.reduce((a, b) => a + b, 0) / centerYs.length;
+    
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (selectedNodes.some(sn => sn.id === n.id)) {
+          return { ...n, position: { ...n.position, y: avgCenterY - (n.height || 0) / 2 } };
+        }
+        return n;
+      })
+    );
+    saveToHistory();
+  }, [selectedNodes, setNodes, saveToHistory]);
+
+  const alignVertically = useCallback(() => {
+    if (selectedNodes.length < 2) return;
+    
+    // X축 기준으로 정렬 (세로선상에 배치)
+    const centerXs = selectedNodes.map(n => n.position.x + (n.width || 0) / 2);
+    const avgCenterX = centerXs.reduce((a, b) => a + b, 0) / centerXs.length;
+    
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (selectedNodes.some(sn => sn.id === n.id)) {
+          return { ...n, position: { ...n.position, x: avgCenterX - (n.width || 0) / 2 } };
+        }
+        return n;
+      })
+    );
+    saveToHistory();
+  }, [selectedNodes, setNodes, saveToHistory]);
 
   return (
     <div className="w-full h-full" onKeyDown={handleKeyDown} tabIndex={0}>
@@ -269,11 +454,19 @@ export function FlowDiagram({
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        onSelectionChange={onSelectionChange}
+        onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.1}
         maxZoom={2}
         defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
+        selectionOnDrag={true}
+        panOnDrag={[1, 2]}
+        selectionMode={SelectionMode.Partial}
+        multiSelectionKeyCode="Shift"
+        deleteKeyCode="Delete"
       >
         <Background />
         <Controls />
@@ -283,25 +476,41 @@ export function FlowDiagram({
           pannable
         />
         
-        {/* Delete Panel */}
-        {(selectedNode || selectedEdge) && (
-          <Panel position="top-right">
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all shadow-lg"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete 키로 삭제
-            </button>
+        {/* Helper Lines */}
+        {isShiftPressed && <HelperLines horizontal={helperLines.horizontal} vertical={helperLines.vertical} />}
+        
+        {/* Alignment Toolbar - show when 2+ nodes selected */}
+        {selectedNodes.length >= 2 && (
+          <Panel position="top-center">
+            <div className="bg-white px-8 py-3 rounded-lg shadow-xl border-2 border-blue-400 min-w-[420px]">
+              <div className="flex items-center gap-6">
+                <span className="text-sm font-bold text-gray-700 whitespace-nowrap">
+                  {selectedNodes.length}개 노드 정렬
+                </span>
+                
+                {/* Horizontal Alignment */}
+                <button
+                  onClick={alignHorizontally}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors whitespace-nowrap"
+                  title="수평 정렬 (Y축 기준)"
+                >
+                  <AlignHorizontalJustifyCenter className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-700">수평 정렬</span>
+                </button>
+                
+                {/* Vertical Alignment */}
+                <button
+                  onClick={alignVertically}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors whitespace-nowrap"
+                  title="수직 정렬 (X축 기준)"
+                >
+                  <AlignVerticalJustifyCenter className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-semibold text-green-700">수직 정렬</span>
+                </button>
+              </div>
+            </div>
           </Panel>
         )}
-
-        {/* Info Panel */}
-        <Panel position="bottom-left">
-          <div className="bg-white px-4 py-2 rounded-lg shadow-lg text-xs text-gray-600 border border-gray-200">
-            <p><strong>노드:</strong> {nodes.length}개 | <strong>연결:</strong> {edges.length}개</p>
-          </div>
-        </Panel>
       </ReactFlow>
     </div>
   );

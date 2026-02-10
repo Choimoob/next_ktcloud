@@ -1,597 +1,638 @@
 import type { Node, Edge } from '@xyflow/react';
 
+/**
+ * NEXT_Server 통합 서비스 흐름도
+ * 
+ * 🎯 핵심 정책 포인트:
+ * 1. ⚡ 빌링 시작점: OpenStack ACTIVE 상태 확인 즉시
+ * 2. ↩️ 실패 시 롤백: 생성된 모든 리소스 자동 삭제 + 로그 기록
+ * 3. 💰 삭제 시 과금: 보존된 볼륨/네트워크는 별도 과금 계속
+ * 
+ * 노드 카테고리:
+ * - 사용자 액션 (user-action) 🔵
+ * - 비즈니스 로직 (business-logic) 🟢
+ * - 빌링 로직 (billing-logic) 🟣
+ * - 실패/에러 (error) 🔴
+ * - 검증/분기 (decision) 🔶
+ * - 중요 노트 (note) 🟠
+ * - 그룹 영역 (group) ⬜
+ */
+
 export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
   nodes: [
-    // ========== STEP 1: 프로젝트 및 권한 준비 (IAM) ==========
+    // ========== 그룹 1: 고객 여정 시작 ==========
     {
-      id: 'group-step1',
+      id: 'group-1',
       type: 'group',
-      position: { x: 100, y: 100 },
-      data: {
-        label: 'Step 1: 프로젝트 및 권한 준비',
-        description: 'IAM - 서비스 구성 필요',
-        color: 'lightblue'
-      },
-      style: { 
-        width: 800, 
-        height: 1200,
-        zIndex: -1,
-        backgroundColor: 'rgba(99, 102, 241, 0.08)',
-        border: '3px solid #6366f1'
-      }
+      position: { x: 50, y: 50 },
+      data: { label: '🎯 고객 여정 시작', color: 'lightblue' },
+      style: { width: 450, height: 500, zIndex: -1 }
     },
 
     {
-      id: 'user-start',
+      id: 'n1',
       type: 'process',
-      position: { x: 250, y: 300 },
+      position: { x: 150, y: 120 },
       data: {
-        label: '👤 사용자 시작',
-        section: 'console',
+        label: '👤 서버 생성 요청',
+        section: 'user-action',
         icon: '🚀',
-        description: '서버 생성 시작'
-      },
-      style: { width: 200, height: 100 }
+        description: '콘솔/API 호출'
+      }
     },
 
     {
-      id: 'step1-mfa',
+      id: 'n2',
       type: 'process',
-      position: { x: 250, y: 500 },
+      position: { x: 150, y: 240 },
       data: {
-        label: '통합 인증 (MFA)',
-        section: 'next-platform',
-        icon: '🔐',
-        description: '필수'
-      },
-      style: { width: 200, height: 80 }
-    },
-
-    {
-      id: 'step1-project',
-      type: 'process',
-      position: { x: 250, y: 650 },
-      data: {
-        label: '프로젝트 생성',
-        section: 'next-platform',
-        icon: '📁',
-        description: '필수'
-      },
-      style: { width: 200, height: 80 }
-    },
-
-    {
-      id: 'step1-permission',
-      type: 'process',
-      position: { x: 250, y: 800 },
-      data: {
-        label: '권한 부여',
-        section: 'next-platform',
+        label: '🔐 통합 인증 (MFA)',
+        section: 'business-logic',
         icon: '✅',
-        description: '필수'
-      },
-      style: { width: 200, height: 80 }
-    },
-
-    {
-      id: 'step1-complete',
-      type: 'note',
-      position: { x: 600, y: 650 },
-      data: {
-        label: 'Step 1 완료',
-        description: '인프라 기반 구성 준비',
-        emoji: '✨'
-      },
-      style: { width: 180, height: 100 }
-    },
-
-    // ========== STEP 2: 인프라 기반 구성 (Network & Security) ==========
-    {
-      id: 'group-step2',
-      type: 'group',
-      position: { x: 1100, y: 100 },
-      data: {
-        label: 'Step 2: 인프라 기반 구성',
-        description: 'Network & Security',
-        color: 'lightpink'
-      },
-      style: { 
-        width: 1200, 
-        height: 2000,
-        zIndex: -1,
-        backgroundColor: 'rgba(236, 72, 153, 0.08)',
-        border: '3px solid #ec4899'
+        description: 'Multi-Factor Auth'
       }
     },
 
     {
-      id: 'step2-start',
-      type: 'note',
-      position: { x: 1250, y: 300 },
-      data: {
-        label: '네트워크 구성 시작',
-        description: '서비스 구성 필요',
-        emoji: '🌐'
-      },
-      style: { width: 200, height: 100 }
-    },
-
-    // 네트워크 (L2/L3)
-    {
-      id: 'step2-vpc',
-      type: 'process',
-      position: { x: 1250, y: 500 },
-      data: {
-        label: 'VPC & Subnet',
-        section: 'openstack',
-        icon: '🔌',
-        description: '필수 - 네트워크 (L2/L3)'
-      },
-      style: { width: 220, height: 100 }
-    },
-
-    {
-      id: 'step2-route-table',
-      type: 'process',
-      position: { x: 1250, y: 680 },
-      data: {
-        label: 'Route Table',
-        section: 'openstack',
-        icon: '🗺️',
-        description: '필수'
-      },
-      style: { width: 220, height: 80 }
-    },
-
-    // 앞단 제어 (선택)
-    {
-      id: 'step2-security-title',
-      type: 'note',
-      position: { x: 1650, y: 500 },
-      data: {
-        label: '앞단 제어',
-        description: '선택 항목',
-        emoji: '🛡️'
-      },
-      style: { width: 180, height: 80 }
-    },
-
-    {
-      id: 'step2-nacl',
+      id: 'd1',
       type: 'decision',
-      position: { x: 1650, y: 650 },
+      position: { x: 180, y: 360 },
       data: {
-        label: 'NACL',
-        description: '선택'
-      },
-      style: { width: 120, height: 120 }
-    },
-
-    {
-      id: 'step2-sg',
-      type: 'decision',
-      position: { x: 1650, y: 850 },
-      data: {
-        label: 'Security Group',
-        description: '선택'
-      },
-      style: { width: 140, height: 140 }
-    },
-
-    {
-      id: 'step2-keypair',
-      type: 'decision',
-      position: { x: 1650, y: 1070 },
-      data: {
-        label: 'Key Pair',
-        description: '선택'
-      },
-      style: { width: 120, height: 120 }
-    },
-
-    {
-      id: 'step2-complete',
-      type: 'note',
-      position: { x: 2000, y: 750 },
-      data: {
-        label: 'Step 2 완료',
-        description: '컴퓨팅 자원 준비',
-        emoji: '✨'
-      },
-      style: { width: 180, height: 100 }
-    },
-
-    // ========== STEP 3: 컴퓨팅 자원 프로비저닝 (Compute & Storage) ==========
-    {
-      id: 'group-step3',
-      type: 'group',
-      position: { x: 2500, y: 100 },
-      data: {
-        label: 'Step 3: 컴퓨팅 자원 프로비저닝',
-        description: 'Compute & Storage',
-        color: 'lightgreen'
-      },
-      style: { 
-        width: 1800, 
-        height: 2500,
-        zIndex: -1,
-        backgroundColor: 'rgba(16, 185, 129, 0.08)',
-        border: '3px solid #10b981'
+        label: '인증 성공?',
+        description: '권한 검증',
+        yesLabel: '성공',
+        noLabel: '실패'
       }
     },
 
     {
-      id: 'step3-start',
-      type: 'note',
-      position: { x: 2650, y: 300 },
-      data: {
-        label: '서버 생성 시작',
-        description: '컴퓨팅 리소스 프로비저닝',
-        emoji: '🖥️'
-      },
-      style: { width: 220, height: 100 }
-    },
-
-    // 기본 생성 (필수)
-    {
-      id: 'step3-basic-title',
-      type: 'note',
-      position: { x: 2650, y: 500 },
-      data: {
-        label: '기본 생성',
-        description: '필수 항목',
-        emoji: '⚙️'
-      },
-      style: { width: 180, height: 80 }
-    },
-
-    {
-      id: 'step3-os-flavor',
+      id: 'err1',
       type: 'process',
-      position: { x: 2650, y: 650 },
+      position: { x: 360, y: 380 },
       data: {
-        label: 'OS & Flavor 선택',
-        section: 'next-platform',
-        icon: '💿',
-        description: '필수'
-      },
-      style: { width: 220, height: 100 }
+        label: '❌ 접근 거부',
+        section: 'error',
+        icon: '🚫',
+        description: '인증 실패'
+      }
+    },
+
+    // ========== 그룹 2: 리소스 검증 ==========
+    {
+      id: 'group-2',
+      type: 'group',
+      position: { x: 600, y: 50 },
+      data: { label: '📋 리소스 검증', color: 'lightgreen' },
+      style: { width: 500, height: 700, zIndex: -1 }
     },
 
     {
-      id: 'step3-root-volume',
+      id: 'n3',
       type: 'process',
-      position: { x: 2650, y: 830 },
+      position: { x: 700, y: 120 },
       data: {
-        label: 'Root Volume',
-        section: 'openstack',
-        icon: '💾',
-        description: '필수 - creating → available'
-      },
-      style: { width: 220, height: 100 }
+        label: '📁 프로젝트 확인',
+        section: 'business-logic',
+        icon: '🔍',
+        description: 'OpenStack Project'
+      }
     },
 
     {
-      id: 'step3-data-volume',
+      id: 'n4',
+      type: 'process',
+      position: { x: 700, y: 240 },
+      data: {
+        label: '🔑 권한 검증',
+        section: 'business-logic',
+        icon: '🛡️',
+        description: 'RBAC 확인'
+      }
+    },
+
+    {
+      id: 'd2',
       type: 'decision',
-      position: { x: 2650, y: 1010 },
+      position: { x: 730, y: 360 },
       data: {
-        label: 'Data Volume',
-        description: '선택'
-      },
-      style: { width: 140, height: 140 }
+        label: '쿼터 충분?',
+        description: 'CPU/RAM/Disk',
+        yesLabel: '충분',
+        noLabel: '부족'
+      }
     },
 
-    // NIC 생성
     {
-      id: 'step3-nic-title',
+      id: 'err2',
+      type: 'process',
+      position: { x: 920, y: 380 },
+      data: {
+        label: '❌ 쿼터 부족',
+        section: 'error',
+        icon: '⚠️',
+        description: '리소스 한계'
+      }
+    },
+
+    {
+      id: 'note1',
       type: 'note',
-      position: { x: 3050, y: 500 },
+      position: { x: 700, y: 560 },
       data: {
-        label: 'NIC 생성',
-        description: '네트워크 인터페이스',
-        emoji: '🔌'
-      },
-      style: { width: 180, height: 80 }
+        label: '📝 검증 로그',
+        description: '권한/쿼터 확인 기록',
+        emoji: '📊'
+      }
+    },
+
+    // ========== 그룹 3: 네트워크 생성 ==========
+    {
+      id: 'group-3',
+      type: 'group',
+      position: { x: 1200, y: 50 },
+      data: { label: '🌐 네트워크 구성', color: 'lightcyan' },
+      style: { width: 550, height: 900, zIndex: -1 }
     },
 
     {
-      id: 'step3-nic-vpc',
+      id: 'n5',
       type: 'process',
-      position: { x: 3050, y: 650 },
+      position: { x: 1300, y: 120 },
       data: {
-        label: 'VPC/Subnet 선택',
-        section: 'openstack',
-        icon: '🌐',
-        description: '필수'
-      },
-      style: { width: 200, height: 100 }
+        label: '🌐 VPC 생성',
+        section: 'business-logic',
+        icon: '🔗',
+        description: 'Virtual Network'
+      }
     },
 
     {
-      id: 'step3-private-ip',
+      id: 'n6',
+      type: 'process',
+      position: { x: 1300, y: 240 },
+      data: {
+        label: '🔌 서브넷 설정',
+        section: 'business-logic',
+        icon: '📡',
+        description: 'IP 대역 할당'
+      }
+    },
+
+    {
+      id: 'n7',
+      type: 'process',
+      position: { x: 1300, y: 360 },
+      data: {
+        label: '🛡️ 보안그룹 생성',
+        section: 'business-logic',
+        icon: '🔒',
+        description: 'Firewall Rules'
+      }
+    },
+
+    {
+      id: 'd3',
       type: 'decision',
-      position: { x: 3050, y: 830 },
+      position: { x: 1330, y: 480 },
       data: {
-        label: 'Private IP 할당',
-        description: '자동/수동 선택'
-      },
-      style: { width: 160, height: 160 }
+        label: 'IP 검증',
+        description: '중복/설정 확인',
+        yesLabel: '정상',
+        noLabel: '충돌'
+      }
     },
 
-    // 추가 생성 (선택)
     {
-      id: 'step3-additional-title',
+      id: 'err3',
+      type: 'process',
+      position: { x: 1300, y: 620 },
+      data: {
+        label: '❌ 네트워크 오류',
+        section: 'error',
+        icon: '🔥',
+        description: 'IP 충돌/설정 실패'
+      }
+    },
+
+    {
+      id: 'rollback1',
+      type: 'process',
+      position: { x: 1300, y: 740 },
+      data: {
+        label: '↩️ 네트워크 롤백',
+        section: 'business-logic',
+        icon: '🔄',
+        description: 'VPC/서브넷 삭제'
+      }
+    },
+
+    {
+      id: 'note2',
       type: 'note',
-      position: { x: 3450, y: 500 },
+      position: { x: 1500, y: 740 },
       data: {
-        label: '추가 생성',
-        description: '선택 항목',
-        emoji: '➕'
-      },
-      style: { width: 180, height: 80 }
-    },
-
-    {
-      id: 'step3-sg-optional',
-      type: 'decision',
-      position: { x: 3450, y: 650 },
-      data: {
-        label: 'Security Group',
-        description: '선택'
-      },
-      style: { width: 140, height: 140 }
-    },
-
-    {
-      id: 'step3-keypair-required',
-      type: 'process',
-      position: { x: 3450, y: 860 },
-      data: {
-        label: 'Key Pair',
-        section: 'next-platform',
-        icon: '🔑',
-        description: '필수'
-      },
-      style: { width: 160, height: 80 }
-    },
-
-    {
-      id: 'step3-userdata',
-      type: 'decision',
-      position: { x: 3450, y: 1010 },
-      data: {
-        label: 'User Data',
-        description: '선택'
-      },
-      style: { width: 120, height: 120 }
-    },
-
-    // Server Build
-    {
-      id: 'step3-server-build',
-      type: 'process',
-      position: { x: 2950, y: 1300 },
-      data: {
-        label: '🏗️ Server Building',
-        section: 'openstack',
-        icon: '⚙️',
-        description: 'OpenStack 서버 생성'
-      },
-      style: { width: 280, height: 120 }
-    },
-
-    {
-      id: 'step3-server-active',
-      type: 'process',
-      position: { x: 2950, y: 1500 },
-      data: {
-        label: '✨ Server ACTIVE',
-        section: 'openstack',
-        icon: '💰',
-        description: '빌링 시작!',
-        auditLog: '💰 빌링 시작!',
-        auditStatus: 'Billing'
-      },
-      style: { width: 280, height: 120 }
-    },
-
-    {
-      id: 'step3-error',
-      type: 'note',
-      position: { x: 2950, y: 1750 },
-      data: {
-        label: '⚠️ 생성 실패 시',
-        description: '롤백 정책:\n- Root Volume 사용 가능 상태로 복원\n- Data Volume 생성 취소\n- NIC 연결 해제',
+        label: '⚠️ 롤백 정책 #1',
+        description: '실패 시 생성된 모든 네트워크 리소스 자동 삭제',
         emoji: '🔄'
-      },
-      style: { width: 280, height: 180, backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }
+      }
     },
 
+    // ========== 그룹 4: 서버 생성 (핵심) ==========
     {
-      id: 'step3-complete',
-      type: 'note',
-      position: { x: 3800, y: 1300 },
-      data: {
-        label: 'Step 3 완료',
-        description: '서버 사용 가능',
-        emoji: '✨'
-      },
-      style: { width: 180, height: 100 }
-    },
-
-    // ========== STEP 4: 외부 통신 설정 (Connectivity) ==========
-    {
-      id: 'group-step4',
+      id: 'group-4',
       type: 'group',
-      position: { x: 4500, y: 100 },
+      position: { x: 1850, y: 50 },
+      data: { label: '🖥️ 서버 인스턴스 생성', color: 'lightpurple' },
+      style: { width: 700, height: 1200, zIndex: -1 }
+    },
+
+    {
+      id: 'n8',
+      type: 'process',
+      position: { x: 1950, y: 120 },
       data: {
-        label: 'Step 4: 외부 통신 설정',
-        description: 'Connectivity - 선택 항목',
-        color: 'lightyellow'
-      },
-      style: { 
-        width: 800, 
-        height: 1400,
-        zIndex: -1,
-        backgroundColor: 'rgba(249, 115, 22, 0.08)',
-        border: '3px solid #f97316'
+        label: '⚙️ Flavor 선택',
+        section: 'business-logic',
+        icon: '🔧',
+        description: 'CPU/RAM 스펙'
       }
     },
 
     {
-      id: 'step4-start',
-      type: 'note',
-      position: { x: 4650, y: 300 },
-      data: {
-        label: '외부 연결 구성',
-        description: '모두 선택 항목',
-        emoji: '🌍'
-      },
-      style: { width: 200, height: 100 }
-    },
-
-    {
-      id: 'step4-igw-nat',
-      type: 'decision',
-      position: { x: 4650, y: 500 },
-      data: {
-        label: 'IGW & NAT Gateway',
-        description: '선택'
-      },
-      style: { width: 180, height: 180 }
-    },
-
-    {
-      id: 'step4-floating-ip',
-      type: 'decision',
-      position: { x: 4650, y: 760 },
-      data: {
-        label: 'Floating IP',
-        description: '선택'
-      },
-      style: { width: 140, height: 140 }
-    },
-
-    {
-      id: 'step4-vpc-peering',
-      type: 'decision',
-      position: { x: 4650, y: 980 },
-      data: {
-        label: 'VPC Peering',
-        description: '선택'
-      },
-      style: { width: 140, height: 140 }
-    },
-
-    {
-      id: 'step4-health-check',
+      id: 'n9',
       type: 'process',
-      position: { x: 5000, y: 650 },
+      position: { x: 1950, y: 240 },
       data: {
-        label: '상태 확인',
-        section: 'next-platform',
-        icon: '✅',
-        description: '서비스 정상 동작 확인'
-      },
-      style: { width: 200, height: 100 }
+        label: '💿 이미지 선택',
+        section: 'business-logic',
+        icon: '🖼️',
+        description: 'OS 이미지'
+      }
     },
 
     {
-      id: 'step4-complete',
-      type: 'note',
-      position: { x: 5000, y: 850 },
+      id: 'n10',
+      type: 'process',
+      position: { x: 1950, y: 360 },
       data: {
-        label: '🎉 완료!',
-        description: 'NEXT 서버 생성 완료\n서비스 운영 시작',
-        emoji: '✨'
-      },
-      style: { width: 200, height: 150, backgroundColor: '#d1fae5', border: '2px solid #10b981' }
+        label: '💾 볼륨 생성',
+        section: 'business-logic',
+        icon: '📦',
+        description: 'Root Volume'
+      }
     },
 
-    // ========== 하단 레전드 ==========
     {
-      id: 'legend',
-      type: 'note',
-      position: { x: 100, y: 2800 },
+      id: 'n11',
+      type: 'process',
+      position: { x: 1950, y: 480 },
       data: {
-        label: '범례',
-        description: '● 필수 항목 = 프로세스 박스\n◆ 선택 항목 = 다이아몬드\n📝 = 감사 로그\n💰 = 과금 처리',
-        emoji: '📖'
-      },
-      style: { width: 300, height: 180, backgroundColor: '#f3f4f6', border: '2px solid #9ca3af' }
+        label: '🖥️ 서버 생성 API',
+        section: 'business-logic',
+        icon: '🚀',
+        description: 'Nova API 호출'
+      }
+    },
+
+    {
+      id: 'd4',
+      type: 'decision',
+      position: { x: 1980, y: 600 },
+      data: {
+        label: 'OpenStack 상태?',
+        description: 'ACTIVE 확인',
+        yesLabel: 'ACTIVE',
+        noLabel: 'ERROR'
+      }
+    },
+
+    {
+      id: 'note-billing-start',
+      type: 'note',
+      position: { x: 2280, y: 600 },
+      data: {
+        label: '⚡ 빌링 시작점',
+        description: 'OpenStack ACTIVE 상태 확인 시점부터 과금 시작!',
+        emoji: '💰'
+      }
+    },
+
+    {
+      id: 'billing-start',
+      type: 'process',
+      position: { x: 1950, y: 750 },
+      data: {
+        label: '💰 과금 시작',
+        section: 'billing-logic',
+        icon: '▶️',
+        description: 'ACTIVE 즉시 시작'
+      }
+    },
+
+    {
+      id: 'err4',
+      type: 'process',
+      position: { x: 1950, y: 900 },
+      data: {
+        label: '❌ 서버 생성 실패',
+        section: 'error',
+        icon: '💥',
+        description: 'BUILD → ERROR'
+      }
+    },
+
+    {
+      id: 'rollback2',
+      type: 'process',
+      position: { x: 1950, y: 1020 },
+      data: {
+        label: '↩️ 전체 롤백',
+        section: 'business-logic',
+        icon: '🔄',
+        description: '볼륨/네트워크/프로젝트 삭제'
+      }
+    },
+
+    {
+      id: 'note3',
+      type: 'note',
+      position: { x: 2230, y: 1020 },
+      data: {
+        label: '⚠️ 롤백 정책 #2',
+        description: '실패 시 모든 리소스 삭제 + 실패 로그 기록 + 과금 없음',
+        emoji: '🔄'
+      }
+    },
+
+    // ========== 그룹 5: 서버 운영 ==========
+    {
+      id: 'group-5',
+      type: 'group',
+      position: { x: 2650, y: 50 },
+      data: { label: '⚙️ 정상 운영', color: 'lightgreen' },
+      style: { width: 450, height: 650, zIndex: -1 }
+    },
+
+    {
+      id: 'n12',
+      type: 'process',
+      position: { x: 2750, y: 120 },
+      data: {
+        label: '✅ 서버 ACTIVE',
+        section: 'business-logic',
+        icon: '🟢',
+        description: '정상 작동 중'
+      }
+    },
+
+    {
+      id: 'billing-process',
+      type: 'process',
+      position: { x: 2750, y: 240 },
+      data: {
+        label: '💰 빌링 처리',
+        section: 'billing-logic',
+        icon: '💳',
+        description: '시간당 과금 누적'
+      }
+    },
+
+    {
+      id: 'n13',
+      type: 'process',
+      position: { x: 2750, y: 360 },
+      data: {
+        label: '📊 모니터링',
+        section: 'business-logic',
+        icon: '👁️',
+        description: 'CPU/메모리/네트워크'
+      }
+    },
+
+    {
+      id: 'd5',
+      type: 'decision',
+      position: { x: 2780, y: 480 },
+      data: {
+        label: '사용자 액션?',
+        description: '서버 제어',
+        yesLabel: '삭제',
+        noLabel: '계속'
+      }
+    },
+
+    {
+      id: 'note4',
+      type: 'note',
+      position: { x: 2750, y: 600 },
+      data: {
+        label: '💡 과금 정책',
+        description: 'ACTIVE 상태 유지 시 계속 과금',
+        emoji: '⚡'
+      }
+    },
+
+    // ========== 그룹 6: 서버 삭제 및 최종 정산 ==========
+    {
+      id: 'group-6',
+      type: 'group',
+      position: { x: 3200, y: 50 },
+      data: { label: '🗑️ 서버 삭제 및 과금 종료', color: 'lightpink' },
+      style: { width: 700, height: 1100, zIndex: -1 }
+    },
+
+    {
+      id: 'user-delete',
+      type: 'process',
+      position: { x: 3300, y: 120 },
+      data: {
+        label: '👤 삭제 요청',
+        section: 'user-action',
+        icon: '🗑️',
+        description: '사용자 삭제 명령'
+      }
+    },
+
+    {
+      id: 'n14',
+      type: 'process',
+      position: { x: 3300, y: 240 },
+      data: {
+        label: '🖥️ 서버 삭제',
+        section: 'business-logic',
+        icon: '💥',
+        description: 'Instance 삭제'
+      }
+    },
+
+    {
+      id: 'd6',
+      type: 'decision',
+      position: { x: 3330, y: 360 },
+      data: {
+        label: '볼륨 삭제?',
+        description: '사용자 선택',
+        yesLabel: '삭제',
+        noLabel: '보존'
+      }
+    },
+
+    {
+      id: 'n15',
+      type: 'process',
+      position: { x: 3300, y: 500 },
+      data: {
+        label: '💾 볼륨 삭제',
+        section: 'business-logic',
+        icon: '🗑️',
+        description: 'Data Volume 삭제'
+      }
+    },
+
+    {
+      id: 'volume-keep',
+      type: 'process',
+      position: { x: 3570, y: 500 },
+      data: {
+        label: '💾 볼륨 보존',
+        section: 'business-logic',
+        icon: '📦',
+        description: '독립 볼륨 유지'
+      }
+    },
+
+    {
+      id: 'note-orphan-billing',
+      type: 'note',
+      position: { x: 3570, y: 620 },
+      data: {
+        label: '💰 찌꺼기 과금',
+        description: '보존된 볼륨은 별도 과금 계속됨! (중요)',
+        emoji: '⚠️'
+      }
+    },
+
+    {
+      id: 'n16',
+      type: 'process',
+      position: { x: 3300, y: 650 },
+      data: {
+        label: '🌐 네트워크 정리',
+        section: 'business-logic',
+        icon: '🧹',
+        description: 'IP 해제/포트 삭제'
+      }
+    },
+
+    {
+      id: 'billing-end',
+      type: 'process',
+      position: { x: 3300, y: 770 },
+      data: {
+        label: '💰 과금 종료',
+        section: 'billing-logic',
+        icon: '⏹️',
+        description: '서버 삭제 완료 시점'
+      }
+    },
+
+    {
+      id: 'final-billing',
+      type: 'process',
+      position: { x: 3300, y: 890 },
+      data: {
+        label: '💳 최종 정산',
+        section: 'billing-logic',
+        icon: '🧾',
+        description: '사용 시간 * 단가'
+      }
+    },
+
+    {
+      id: 'note5',
+      type: 'note',
+      position: { x: 3300, y: 1010 },
+      data: {
+        label: '📝 삭제 로그',
+        description: '삭제 시각/사용자/리소스 기록',
+        emoji: '📊'
+      }
+    },
+
+    // ========== 감사 로그 (꼬리표) ==========
+    {
+      id: 'audit-central',
+      type: 'note',
+      position: { x: 1200, y: 1100 },
+      data: {
+        label: '📊 중앙 감사 로그',
+        description: '모든 이벤트 중앙 집중 기록',
+        emoji: '🗂️'
+      }
     },
   ],
 
   edges: [
-    // ========== STEP 1 FLOW ==========
-    { id: 'e-start-mfa', source: 'user-start', target: 'step1-mfa', animated: true, label: '서비스 시작' },
-    { id: 'e-mfa-project', source: 'step1-mfa', target: 'step1-project', animated: true },
-    { id: 'e-project-perm', source: 'step1-project', target: 'step1-permission', animated: true },
-    { id: 'e-perm-complete1', source: 'step1-permission', target: 'step1-complete', animated: true },
+    // ========== 메인 플로우 (Happy Path) ==========
+    { id: 'e1', source: 'n1', target: 'n2', animated: true },
+    { id: 'e2', source: 'n2', target: 'd1', animated: true },
+    { id: 'e3', source: 'd1', target: 'n3', label: '성공', animated: true, style: { stroke: '#22C55E', strokeWidth: 2 } },
+    { id: 'e4', source: 'd1', target: 'err1', label: '실패', style: { stroke: '#EF4444' } },
 
-    // ========== STEP 1 → STEP 2 ==========
-    { id: 'e-step1-step2', source: 'step1-complete', target: 'step2-start', animated: true, label: '인프라 구성', style: { stroke: '#ec4899', strokeWidth: 3 } },
+    { id: 'e5', source: 'n3', target: 'n4', animated: true },
+    { id: 'e6', source: 'n4', target: 'd2', animated: true },
+    { id: 'e7', source: 'd2', target: 'n5', label: '충분', animated: true, style: { stroke: '#22C55E', strokeWidth: 2 } },
+    { id: 'e8', source: 'd2', target: 'err2', label: '부족', style: { stroke: '#EF4444' } },
+    { id: 'e9', source: 'n4', target: 'note1', style: { stroke: '#9CA3AF', strokeDasharray: '5,5' }, label: '📝' },
 
-    // ========== STEP 2 FLOW ==========
-    { id: 'e-step2-vpc', source: 'step2-start', target: 'step2-vpc', animated: true },
-    { id: 'e-vpc-route', source: 'step2-vpc', target: 'step2-route-table', animated: true },
+    { id: 'e10', source: 'n5', target: 'n6', animated: true },
+    { id: 'e11', source: 'n6', target: 'n7', animated: true },
+    { id: 'e12', source: 'n7', target: 'd3', animated: true },
+    { id: 'e13', source: 'd3', target: 'n8', label: '정상', animated: true, style: { stroke: '#22C55E', strokeWidth: 2 } },
+    { id: 'e14', source: 'd3', target: 'err3', label: '충돌', style: { stroke: '#EF4444' } },
+    { id: 'e15', source: 'err3', target: 'rollback1', style: { stroke: '#EF4444' } },
+    { id: 'e16', source: 'rollback1', target: 'note2', style: { stroke: '#F59E0B', strokeDasharray: '5,5' } },
+
+    { id: 'e17', source: 'n8', target: 'n9', animated: true },
+    { id: 'e18', source: 'n9', target: 'n10', animated: true },
+    { id: 'e19', source: 'n10', target: 'n11', animated: true },
+    { id: 'e20', source: 'n11', target: 'd4', animated: true },
     
-    // Step 2 Optional
-    { id: 'e-vpc-security', source: 'step2-vpc', target: 'step2-security-title', animated: true, label: '선택사항' },
-    { id: 'e-security-nacl', source: 'step2-security-title', target: 'step2-nacl', style: { strokeDasharray: '5,5' } },
-    { id: 'e-security-sg', source: 'step2-security-title', target: 'step2-sg', style: { strokeDasharray: '5,5' } },
-    { id: 'e-security-kp', source: 'step2-security-title', target: 'step2-keypair', style: { strokeDasharray: '5,5' } },
+    // ⚡ 빌링 시작점 (핵심 포인트 #1)
+    { id: 'e21', source: 'd4', target: 'billing-start', label: 'ACTIVE ✅', animated: true, style: { stroke: '#A855F7', strokeWidth: 3 } },
+    { id: 'e22', source: 'd4', target: 'note-billing-start', style: { stroke: '#A855F7', strokeDasharray: '5,5' }, label: '💰' },
     
-    { id: 'e-route-complete2', source: 'step2-route-table', target: 'step2-complete', animated: true },
-    { id: 'e-nacl-complete2', source: 'step2-nacl', target: 'step2-complete', style: { strokeDasharray: '5,5' } },
-    { id: 'e-sg-complete2', source: 'step2-sg', target: 'step2-complete', style: { strokeDasharray: '5,5' } },
-    { id: 'e-kp-complete2', source: 'step2-keypair', target: 'step2-complete', style: { strokeDasharray: '5,5' } },
+    // ↩️ 롤백 (핵심 포인트 #2)
+    { id: 'e23', source: 'd4', target: 'err4', label: 'ERROR', style: { stroke: '#EF4444', strokeWidth: 2 } },
+    { id: 'e24', source: 'err4', target: 'rollback2', style: { stroke: '#EF4444' } },
+    { id: 'e25', source: 'rollback2', target: 'note3', style: { stroke: '#F59E0B', strokeDasharray: '5,5' } },
 
-    // ========== STEP 2 → STEP 3 ==========
-    { id: 'e-step2-step3', source: 'step2-complete', target: 'step3-start', animated: true, label: '서버 생성', style: { stroke: '#10b981', strokeWidth: 3 } },
+    { id: 'e26', source: 'billing-start', target: 'n12', animated: true, style: { stroke: '#A855F7', strokeWidth: 2 } },
+    { id: 'e27', source: 'n12', target: 'billing-process', animated: true },
+    { id: 'e28', source: 'billing-process', target: 'n13', animated: true },
+    { id: 'e29', source: 'n13', target: 'd5', animated: true },
+    { id: 'e30', source: 'd5', target: 'n13', label: '계속', animated: true, type: 'smoothstep', style: { stroke: '#22C55E' } },
+    { id: 'e31', source: 'billing-process', target: 'note4', style: { stroke: '#9CA3AF', strokeDasharray: '5,5' } },
 
-    // ========== STEP 3 FLOW ==========
-    // Basic
-    { id: 'e-step3-basic', source: 'step3-start', target: 'step3-basic-title', animated: true },
-    { id: 'e-basic-os', source: 'step3-basic-title', target: 'step3-os-flavor', animated: true },
-    { id: 'e-os-root', source: 'step3-os-flavor', target: 'step3-root-volume', animated: true },
-    { id: 'e-root-data', source: 'step3-root-volume', target: 'step3-data-volume', style: { strokeDasharray: '5,5' }, label: '선택' },
-
-    // NIC
-    { id: 'e-step3-nic', source: 'step3-start', target: 'step3-nic-title', animated: true },
-    { id: 'e-nic-vpc', source: 'step3-nic-title', target: 'step3-nic-vpc', animated: true },
-    { id: 'e-vpc-ip', source: 'step3-nic-vpc', target: 'step3-private-ip', animated: true },
-
-    // Additional
-    { id: 'e-step3-add', source: 'step3-start', target: 'step3-additional-title', animated: true },
-    { id: 'e-add-sg', source: 'step3-additional-title', target: 'step3-sg-optional', style: { strokeDasharray: '5,5' } },
-    { id: 'e-add-kp', source: 'step3-additional-title', target: 'step3-keypair-required', animated: true },
-    { id: 'e-add-ud', source: 'step3-additional-title', target: 'step3-userdata', style: { strokeDasharray: '5,5' } },
-
-    // Server Build
-    { id: 'e-root-build', source: 'step3-root-volume', target: 'step3-server-build', animated: true },
-    { id: 'e-data-build', source: 'step3-data-volume', target: 'step3-server-build', animated: true },
-    { id: 'e-ip-build', source: 'step3-private-ip', target: 'step3-server-build', animated: true },
-    { id: 'e-kp-build', source: 'step3-keypair-required', target: 'step3-server-build', animated: true },
+    { id: 'e32', source: 'd5', target: 'user-delete', label: '삭제', style: { stroke: '#EF4444', strokeWidth: 2 } },
+    { id: 'e33', source: 'user-delete', target: 'n14', animated: true },
+    { id: 'e34', source: 'n14', target: 'd6', animated: true },
+    { id: 'e35', source: 'd6', target: 'n15', label: '삭제', animated: true },
+    { id: 'e36', source: 'd6', target: 'volume-keep', label: '보존', style: { stroke: '#F59E0B', strokeWidth: 2 } },
     
-    { id: 'e-build-active', source: 'step3-server-build', target: 'step3-server-active', animated: true, label: 'BUILD → ACTIVE 💰', labelStyle: { fill: '#059669', fontWeight: 700 } },
-    { id: 'e-build-error', source: 'step3-server-build', target: 'step3-error', style: { stroke: '#f59e0b', strokeWidth: 2 }, label: '실패 시' },
+    // 💰 찌꺼기 과금 (핵심 포인트 #3)
+    { id: 'e37', source: 'volume-keep', target: 'note-orphan-billing', style: { stroke: '#EF4444', strokeDasharray: '5,5' }, label: '💰' },
     
-    { id: 'e-active-complete3', source: 'step3-server-active', target: 'step3-complete', animated: true },
+    { id: 'e38', source: 'n15', target: 'n16', animated: true },
+    { id: 'e39', source: 'volume-keep', target: 'n16', style: { stroke: '#9CA3AF' } },
+    { id: 'e40', source: 'n16', target: 'billing-end', animated: true },
+    { id: 'e41', source: 'billing-end', target: 'final-billing', animated: true, style: { stroke: '#A855F7', strokeWidth: 2 } },
+    { id: 'e42', source: 'final-billing', target: 'note5', style: { stroke: '#9CA3AF', strokeDasharray: '5,5' }, label: '📝' },
 
-    // ========== STEP 3 → STEP 4 ==========
-    { id: 'e-step3-step4', source: 'step3-complete', target: 'step4-start', animated: true, label: '외부 연결', style: { stroke: '#f97316', strokeWidth: 3 } },
-
-    // ========== STEP 4 FLOW ==========
-    { id: 'e-step4-igw', source: 'step4-start', target: 'step4-igw-nat', style: { strokeDasharray: '5,5' } },
-    { id: 'e-step4-fip', source: 'step4-start', target: 'step4-floating-ip', style: { strokeDasharray: '5,5' } },
-    { id: 'e-step4-peering', source: 'step4-start', target: 'step4-vpc-peering', style: { strokeDasharray: '5,5' } },
-    
-    { id: 'e-igw-health', source: 'step4-igw-nat', target: 'step4-health-check', style: { strokeDasharray: '5,5' } },
-    { id: 'e-fip-health', source: 'step4-floating-ip', target: 'step4-health-check', style: { strokeDasharray: '5,5' } },
-    { id: 'e-peering-health', source: 'step4-vpc-peering', target: 'step4-health-check', style: { strokeDasharray: '5,5' } },
-    
-    { id: 'e-health-complete4', source: 'step4-health-check', target: 'step4-complete', animated: true },
+    // ========== 감사 로그 (꼬리표 방식) ==========
+    { id: 'e-audit1', source: 'n2', target: 'audit-central', style: { stroke: '#9CA3AF', strokeDasharray: '3,3' } },
+    { id: 'e-audit2', source: 'n7', target: 'audit-central', style: { stroke: '#9CA3AF', strokeDasharray: '3,3' } },
+    { id: 'e-audit3', source: 'billing-start', target: 'audit-central', style: { stroke: '#9CA3AF', strokeDasharray: '3,3' } },
+    { id: 'e-audit4', source: 'billing-end', target: 'audit-central', style: { stroke: '#9CA3AF', strokeDasharray: '3,3' } },
   ]
 };

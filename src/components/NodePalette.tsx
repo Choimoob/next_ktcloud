@@ -250,15 +250,15 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
   }
 
   return (
-    <div className="w-64 bg-white border-r border-gray-300 overflow-y-auto" style={{ height: 'calc(100vh - 180px)' }}>
+    <div className="w-72 bg-white border-r border-gray-300 overflow-y-auto flex-shrink-0" style={{ height: 'calc(100vh - 180px)' }}>
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
-        <h3 className="font-bold text-lg flex items-center gap-2">
+        <h3 className="font-bold text-lg flex items-center gap-2 whitespace-nowrap">
           <Plus className="w-5 h-5" />
           노드 추가
         </h3>
         <button
           onClick={() => setIsCollapsed(true)}
-          className="p-2 bg-gray-100 hover:bg-blue-100 rounded-lg transition-all hover:shadow-md"
+          className="p-2 bg-gray-100 hover:bg-blue-100 rounded-lg transition-all hover:shadow-md flex-shrink-0"
           title="패널 접기"
         >
           <ChevronLeft className="w-5 h-5 text-gray-700 hover:text-blue-600" />
@@ -268,7 +268,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
       <div className="p-4 space-y-4">
         {nodeTemplates.map((template, idx) => (
           <div key={idx}>
-            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2 whitespace-nowrap">
               {template.category}
             </h4>
             <div className="space-y-2">
@@ -276,7 +276,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
                 <button
                   key={nodeIdx}
                   onClick={() => onAddNode(node)}
-                  className={`w-full p-3 rounded-lg border-2 ${template.color} hover:shadow-md transition-all text-left text-sm font-medium`}
+                  className={`w-full p-3 rounded-lg border-2 ${template.color} hover:shadow-md transition-all text-left text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis`}
                 >
                   {node.data.icon && <span className="mr-2">{node.data.icon}</span>}
                   {node.data.label}
@@ -290,14 +290,32 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
       </div>
 
       <div className="mt-6 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 mx-4 mb-4">
-        <p className="font-semibold mb-1">💡 사용법</p>
-        <ul className="space-y-1">
-          <li>• 버튼 클릭으로 노드 추가</li>
-          <li>• 노드 클릭하여 선택</li>
-          <li>• 우측 패널에서 편집</li>
-          <li>• Delete 키로 삭제</li>
-          <li>• 드래그로 연결</li>
+        <p className="font-semibold mb-2 text-blue-600 whitespace-nowrap">💡 사용법</p>
+        <ul className="space-y-1.5">
+          <li className="whitespace-nowrap"><strong>노드 추가:</strong> 버튼 클릭</li>
+          <li className="whitespace-nowrap"><strong>노드 편집:</strong> 우측 패널에서 수정</li>
+          <li className="whitespace-nowrap"><strong>노드 연결:</strong> 핸들을 드래그</li>
         </ul>
+        
+        <div className="mt-3 pt-3 border-t border-gray-300">
+          <p className="font-semibold mb-2 text-green-600 whitespace-nowrap">🎯 선택 & 정렬</p>
+          <ul className="space-y-1.5">
+            <li>• <strong>Shift + 드래그:</strong> 박스 선택</li>
+            <li>• <strong>Ctrl/Cmd + 클릭:</strong> 다중 선택</li>
+            <li>• <strong>Shift + 이동:</strong> 정렬 가이드</li>
+            <li>• <strong>2개 이상 선택:</strong> 정렬 툴바 표시</li>
+          </ul>
+        </div>
+        
+        <div className="mt-3 pt-3 border-t border-gray-300">
+          <p className="font-semibold mb-2 text-red-600 whitespace-nowrap">⌨️ 단축키</p>
+          <ul className="space-y-1.5">
+            <li className="whitespace-nowrap">• <strong>Delete/Backspace:</strong> 삭제</li>
+            <li className="whitespace-nowrap">• <strong>Ctrl+Z:</strong> 되돌리기</li>
+            <li className="whitespace-nowrap">• <strong>Ctrl+Y:</strong> 다시 실행</li>
+            <li className="whitespace-nowrap">• <strong>Ctrl+S:</strong> JSON 저장</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
