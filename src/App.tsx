@@ -14,7 +14,14 @@ export default function App() {
   const [showJsonEditor, setShowJsonEditor] = useState(false); // ✅ Start with JSON editor closed (viewing mode)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
-  const [nodes, setNodes] = useState<Node[]>(serverCreationFlowData.nodes);
+  
+  // ✅ Force clean nodes without any parent references
+  const cleanNodes = serverCreationFlowData.nodes.map(node => {
+    const { parentNode, parentId, extent, ...cleanNode } = node as any;
+    return cleanNode as Node;
+  });
+  
+  const [nodes, setNodes] = useState<Node[]>(cleanNodes);
   const [edges, setEdges] = useState<Edge[]>(serverCreationFlowData.edges);
   const [addNodeTrigger, setAddNodeTrigger] = useState<{ nodeData: any; timestamp: number } | null>(null);
   const [updateNodeTrigger, setUpdateNodeTrigger] = useState<{ nodeId: string; newData: any; timestamp: number } | null>(null);

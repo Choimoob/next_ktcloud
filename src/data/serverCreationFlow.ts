@@ -9,7 +9,8 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
       position: { x: 100, y: 100 },
       data: {
         label: 'Step 1: 프로젝트 및 권한 준비',
-        description: 'IAM - 서비스 구성 필요'
+        description: 'IAM - 서비스 구성 필요',
+        color: 'lightblue'
       },
       style: { 
         width: 800, 
@@ -23,70 +24,65 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
     {
       id: 'user-start',
       type: 'process',
-      position: { x: 150, y: 200 },
+      position: { x: 250, y: 300 },
       data: {
         label: '👤 사용자 시작',
         section: 'console',
         icon: '🚀',
         description: '서버 생성 시작'
       },
-      style: { width: 200, height: 100 },
-      parentId: 'group-step1'
+      style: { width: 200, height: 100 }
     },
 
     {
       id: 'step1-mfa',
       type: 'process',
-      position: { x: 150, y: 400 },
+      position: { x: 250, y: 500 },
       data: {
         label: '통합 인증 (MFA)',
         section: 'next-platform',
         icon: '🔐',
         description: '필수'
       },
-      style: { width: 200, height: 80 },
-      parentId: 'group-step1'
+      style: { width: 200, height: 80 }
     },
 
     {
       id: 'step1-project',
       type: 'process',
-      position: { x: 150, y: 550 },
+      position: { x: 250, y: 650 },
       data: {
         label: '프로젝트 생성',
         section: 'next-platform',
         icon: '📁',
         description: '필수'
       },
-      style: { width: 200, height: 80 },
-      parentId: 'group-step1'
+      style: { width: 200, height: 80 }
     },
 
     {
       id: 'step1-permission',
       type: 'process',
-      position: { x: 150, y: 700 },
+      position: { x: 250, y: 800 },
       data: {
         label: '권한 부여',
         section: 'next-platform',
         icon: '✅',
         description: '필수'
       },
-      style: { width: 200, height: 80 },
-      parentId: 'group-step1'
+      style: { width: 200, height: 80 }
     },
 
     {
       id: 'step1-complete',
       type: 'note',
-      position: { x: 500, y: 550 },
+      position: { x: 600, y: 650 },
       data: {
         label: 'Step 1 완료',
         description: '인프라 기반 구성 준비',
         emoji: '✨'
       },
-      style: { width: 180, height: 100 },
-      parentId: 'group-step1'
+      style: { width: 180, height: 100 }
     },
 
     // ========== STEP 2: 인프라 기반 구성 (Network & Security) ==========
@@ -96,7 +92,8 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
       position: { x: 1100, y: 100 },
       data: {
         label: 'Step 2: 인프라 기반 구성',
-        description: 'Network & Security'
+        description: 'Network & Security',
+        color: 'lightpink'
       },
       style: { 
         width: 1200, 
@@ -110,106 +107,98 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
     {
       id: 'step2-start',
       type: 'note',
-      position: { x: 1150, y: 200 },
+      position: { x: 1250, y: 300 },
       data: {
         label: '네트워크 구성 시작',
         description: '서비스 구성 필요',
         emoji: '🌐'
       },
-      style: { width: 200, height: 100 },
-      parentId: 'group-step2'
+      style: { width: 200, height: 100 }
     },
 
     // 네트워크 (L2/L3)
     {
       id: 'step2-vpc',
       type: 'process',
-      position: { x: 1150, y: 400 },
+      position: { x: 1250, y: 500 },
       data: {
         label: 'VPC & Subnet',
         section: 'openstack',
         icon: '🔌',
         description: '필수 - 네트워크 (L2/L3)'
       },
-      style: { width: 220, height: 100 },
-      parentId: 'group-step2'
+      style: { width: 220, height: 100 }
     },
 
     {
       id: 'step2-route-table',
       type: 'process',
-      position: { x: 1150, y: 580 },
+      position: { x: 1250, y: 680 },
       data: {
         label: 'Route Table',
         section: 'openstack',
         icon: '🗺️',
         description: '필수'
       },
-      style: { width: 220, height: 80 },
-      parentId: 'group-step2'
+      style: { width: 220, height: 80 }
     },
 
     // 앞단 제어 (선택)
     {
       id: 'step2-security-title',
       type: 'note',
-      position: { x: 1550, y: 400 },
+      position: { x: 1650, y: 500 },
       data: {
         label: '앞단 제어',
         description: '선택 항목',
         emoji: '🛡️'
       },
-      style: { width: 180, height: 80 },
-      parentId: 'group-step2'
+      style: { width: 180, height: 80 }
     },
 
     {
       id: 'step2-nacl',
       type: 'decision',
-      position: { x: 1550, y: 550 },
+      position: { x: 1650, y: 650 },
       data: {
         label: 'NACL',
         description: '선택'
       },
-      style: { width: 120, height: 120 },
-      parentId: 'group-step2'
+      style: { width: 120, height: 120 }
     },
 
     {
       id: 'step2-sg',
       type: 'decision',
-      position: { x: 1550, y: 750 },
+      position: { x: 1650, y: 850 },
       data: {
         label: 'Security Group',
         description: '선택'
       },
-      style: { width: 140, height: 140 },
-      parentId: 'group-step2'
+      style: { width: 140, height: 140 }
     },
 
     {
       id: 'step2-keypair',
       type: 'decision',
-      position: { x: 1550, y: 970 },
+      position: { x: 1650, y: 1070 },
       data: {
         label: 'Key Pair',
         description: '선택'
       },
-      style: { width: 120, height: 120 },
-      parentId: 'group-step2'
+      style: { width: 120, height: 120 }
     },
 
     {
       id: 'step2-complete',
       type: 'note',
-      position: { x: 1900, y: 650 },
+      position: { x: 2000, y: 750 },
       data: {
         label: 'Step 2 완료',
         description: '컴퓨팅 자원 준비',
         emoji: '✨'
       },
-      style: { width: 180, height: 100 },
-      parentId: 'group-step2'
+      style: { width: 180, height: 100 }
     },
 
     // ========== STEP 3: 컴퓨팅 자원 프로비저닝 (Compute & Storage) ==========
@@ -219,7 +208,8 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
       position: { x: 2500, y: 100 },
       data: {
         label: 'Step 3: 컴퓨팅 자원 프로비저닝',
-        description: 'Compute & Storage'
+        description: 'Compute & Storage',
+        color: 'lightgreen'
       },
       style: { 
         width: 1800, 
@@ -233,181 +223,168 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
     {
       id: 'step3-start',
       type: 'note',
-      position: { x: 2550, y: 200 },
+      position: { x: 2650, y: 300 },
       data: {
         label: '서버 생성 시작',
         description: '컴퓨팅 리소스 프로비저닝',
         emoji: '🖥️'
       },
-      style: { width: 220, height: 100 },
-      parentId: 'group-step3'
+      style: { width: 220, height: 100 }
     },
 
     // 기본 생성 (필수)
     {
       id: 'step3-basic-title',
       type: 'note',
-      position: { x: 2550, y: 400 },
+      position: { x: 2650, y: 500 },
       data: {
         label: '기본 생성',
         description: '필수 항목',
         emoji: '⚙️'
       },
-      style: { width: 180, height: 80 },
-      parentId: 'group-step3'
+      style: { width: 180, height: 80 }
     },
 
     {
       id: 'step3-os-flavor',
       type: 'process',
-      position: { x: 2550, y: 550 },
+      position: { x: 2650, y: 650 },
       data: {
         label: 'OS & Flavor 선택',
         section: 'next-platform',
         icon: '💿',
         description: '필수'
       },
-      style: { width: 220, height: 100 },
-      parentId: 'group-step3'
+      style: { width: 220, height: 100 }
     },
 
     {
       id: 'step3-root-volume',
       type: 'process',
-      position: { x: 2550, y: 730 },
+      position: { x: 2650, y: 830 },
       data: {
         label: 'Root Volume',
         section: 'openstack',
         icon: '💾',
         description: '필수 - creating → available'
       },
-      style: { width: 220, height: 100 },
-      parentId: 'group-step3'
+      style: { width: 220, height: 100 }
     },
 
     {
       id: 'step3-data-volume',
       type: 'decision',
-      position: { x: 2550, y: 910 },
+      position: { x: 2650, y: 1010 },
       data: {
         label: 'Data Volume',
         description: '선택'
       },
-      style: { width: 140, height: 140 },
-      parentId: 'group-step3'
+      style: { width: 140, height: 140 }
     },
 
     // NIC 생성
     {
       id: 'step3-nic-title',
       type: 'note',
-      position: { x: 2950, y: 400 },
+      position: { x: 3050, y: 500 },
       data: {
         label: 'NIC 생성',
         description: '네트워크 인터페이스',
         emoji: '🔌'
       },
-      style: { width: 180, height: 80 },
-      parentId: 'group-step3'
+      style: { width: 180, height: 80 }
     },
 
     {
       id: 'step3-nic-vpc',
       type: 'process',
-      position: { x: 2950, y: 550 },
+      position: { x: 3050, y: 650 },
       data: {
         label: 'VPC/Subnet 선택',
         section: 'openstack',
         icon: '🌐',
         description: '필수'
       },
-      style: { width: 200, height: 100 },
-      parentId: 'group-step3'
+      style: { width: 200, height: 100 }
     },
 
     {
       id: 'step3-private-ip',
       type: 'decision',
-      position: { x: 2950, y: 730 },
+      position: { x: 3050, y: 830 },
       data: {
         label: 'Private IP 할당',
         description: '자동/수동 선택'
       },
-      style: { width: 160, height: 160 },
-      parentId: 'group-step3'
+      style: { width: 160, height: 160 }
     },
 
     // 추가 생성 (선택)
     {
       id: 'step3-additional-title',
       type: 'note',
-      position: { x: 3350, y: 400 },
+      position: { x: 3450, y: 500 },
       data: {
         label: '추가 생성',
         description: '선택 항목',
         emoji: '➕'
       },
-      style: { width: 180, height: 80 },
-      parentId: 'group-step3'
+      style: { width: 180, height: 80 }
     },
 
     {
       id: 'step3-sg-optional',
       type: 'decision',
-      position: { x: 3350, y: 550 },
+      position: { x: 3450, y: 650 },
       data: {
         label: 'Security Group',
         description: '선택'
       },
-      style: { width: 140, height: 140 },
-      parentId: 'group-step3'
+      style: { width: 140, height: 140 }
     },
 
     {
       id: 'step3-keypair-required',
       type: 'process',
-      position: { x: 3350, y: 760 },
+      position: { x: 3450, y: 860 },
       data: {
         label: 'Key Pair',
         section: 'next-platform',
         icon: '🔑',
         description: '필수'
       },
-      style: { width: 160, height: 80 },
-      parentId: 'group-step3'
+      style: { width: 160, height: 80 }
     },
 
     {
       id: 'step3-userdata',
       type: 'decision',
-      position: { x: 3350, y: 910 },
+      position: { x: 3450, y: 1010 },
       data: {
         label: 'User Data',
         description: '선택'
       },
-      style: { width: 120, height: 120 },
-      parentId: 'group-step3'
+      style: { width: 120, height: 120 }
     },
 
     // Server Build
     {
       id: 'step3-server-build',
       type: 'process',
-      position: { x: 2850, y: 1200 },
+      position: { x: 2950, y: 1300 },
       data: {
         label: '🏗️ Server Building',
         section: 'openstack',
         icon: '⚙️',
         description: 'OpenStack 서버 생성'
       },
-      style: { width: 280, height: 120 },
-      parentId: 'group-step3'
+      style: { width: 280, height: 120 }
     },
 
     {
       id: 'step3-server-active',
       type: 'process',
-      position: { x: 2850, y: 1400 },
+      position: { x: 2950, y: 1500 },
       data: {
         label: '✨ Server ACTIVE',
         section: 'openstack',
@@ -416,34 +393,31 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
         auditLog: '💰 빌링 시작!',
         auditStatus: 'Billing'
       },
-      style: { width: 280, height: 120 },
-      parentId: 'group-step3'
+      style: { width: 280, height: 120 }
     },
 
     {
       id: 'step3-error',
       type: 'note',
-      position: { x: 2850, y: 1650 },
+      position: { x: 2950, y: 1750 },
       data: {
         label: '⚠️ 생성 실패 시',
         description: '롤백 정책:\n- Root Volume 사용 가능 상태로 복원\n- Data Volume 생성 취소\n- NIC 연결 해제',
         emoji: '🔄'
       },
-      style: { width: 280, height: 180, backgroundColor: '#fef3c7', border: '2px solid #f59e0b' },
-      parentId: 'group-step3'
+      style: { width: 280, height: 180, backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }
     },
 
     {
       id: 'step3-complete',
       type: 'note',
-      position: { x: 3700, y: 1200 },
+      position: { x: 3800, y: 1300 },
       data: {
         label: 'Step 3 완료',
         description: '서버 사용 가능',
         emoji: '✨'
       },
-      style: { width: 180, height: 100 },
-      parentId: 'group-step3'
+      style: { width: 180, height: 100 }
     },
 
     // ========== STEP 4: 외부 통신 설정 (Connectivity) ==========
@@ -453,7 +427,8 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
       position: { x: 4500, y: 100 },
       data: {
         label: 'Step 4: 외부 통신 설정',
-        description: 'Connectivity - 선택 항목'
+        description: 'Connectivity - 선택 항목',
+        color: 'lightyellow'
       },
       style: { 
         width: 800, 
@@ -467,77 +442,71 @@ export const serverCreationFlowData: { nodes: Node[], edges: Edge[] } = {
     {
       id: 'step4-start',
       type: 'note',
-      position: { x: 4550, y: 200 },
+      position: { x: 4650, y: 300 },
       data: {
         label: '외부 연결 구성',
         description: '모두 선택 항목',
         emoji: '🌍'
       },
-      style: { width: 200, height: 100 },
-      parentId: 'group-step4'
+      style: { width: 200, height: 100 }
     },
 
     {
       id: 'step4-igw-nat',
       type: 'decision',
-      position: { x: 4550, y: 400 },
+      position: { x: 4650, y: 500 },
       data: {
         label: 'IGW & NAT Gateway',
         description: '선택'
       },
-      style: { width: 180, height: 180 },
-      parentId: 'group-step4'
+      style: { width: 180, height: 180 }
     },
 
     {
       id: 'step4-floating-ip',
       type: 'decision',
-      position: { x: 4550, y: 660 },
+      position: { x: 4650, y: 760 },
       data: {
         label: 'Floating IP',
         description: '선택'
       },
-      style: { width: 140, height: 140 },
-      parentId: 'group-step4'
+      style: { width: 140, height: 140 }
     },
 
     {
       id: 'step4-vpc-peering',
       type: 'decision',
-      position: { x: 4550, y: 880 },
+      position: { x: 4650, y: 980 },
       data: {
         label: 'VPC Peering',
         description: '선택'
       },
-      style: { width: 140, height: 140 },
-      parentId: 'group-step4'
+      style: { width: 140, height: 140 }
     },
 
     {
       id: 'step4-health-check',
       type: 'process',
-      position: { x: 4900, y: 550 },
+      position: { x: 5000, y: 650 },
       data: {
         label: '상태 확인',
         section: 'next-platform',
         icon: '✅',
         description: '서비스 정상 동작 확인'
       },
-      style: { width: 200, height: 100 },
-      parentId: 'group-step4'
+      style: { width: 200, height: 100 }
     },
 
     {
       id: 'step4-complete',
       type: 'note',
-      position: { x: 4900, y: 750 },
+      position: { x: 5000, y: 850 },
       data: {
         label: '🎉 완료!',
         description: 'NEXT 서버 생성 완료\n서비스 운영 시작',
         emoji: '✨'
       },
-      style: { width: 200, height: 150, backgroundColor: '#d1fae5', border: '2px solid #10b981' },
-      parentId: 'group-step4'
+      style: { width: 200, height: 150, backgroundColor: '#d1fae5', border: '2px solid #10b981' }
     },
 
     // ========== 하단 레전드 ==========

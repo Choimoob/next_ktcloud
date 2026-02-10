@@ -97,13 +97,11 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
         clearTimeout(nodeChangeTimerRef.current);
       }
       nodeChangeTimerRef.current = setTimeout(() => {
-        setNodes((currentNodes) => {
-          saveToHistory(currentNodes, edges);
-          return currentNodes;
-        });
+        // Use nodes state directly via ref pattern
+        saveToHistory(nodes, edges);
       }, 300);
     }
-  }, [onNodesChangeInternal, edges, saveToHistory, setNodes]);
+  }, [onNodesChangeInternal, nodes, edges, saveToHistory]);
 
   // Custom edges change handler
   const handleEdgesChange = useCallback((changes: any[]) => {
@@ -178,31 +176,37 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
           } : {}),
         },
       };
-      setNodes((nds) => [...nds, newNode]);
-      saveToHistory([...nodes, newNode], edges);
+      setNodes((nds) => {
+        const updatedNodes = [...nds, newNode];
+        // Save to history after state update
+        setTimeout(() => saveToHistory(updatedNodes, edges), 0);
+        return updatedNodes;
+      });
     }
-  }, [addNodeTrigger, setNodes, nodes, edges, saveToHistory]);
+  }, [addNodeTrigger, setNodes]); // ✅ Only depend on addNodeTrigger and setNodes
 
   // Listen for update node trigger from parent
   useEffect(() => {
     if (updateNodeTrigger) {
-      setNodes((nds) =>
-        nds.map((node) => {
+      setNodes((nds) => {
+        const updatedNodes = nds.map((node) => {
           if (node.id === updateNodeTrigger.nodeId) {
             return { ...node, data: { ...node.data, ...updateNodeTrigger.newData } };
           }
           return node;
-        })
-      );
-      saveToHistory(nodes, edges);
+        });
+        // Save to history after state update
+        setTimeout(() => saveToHistory(updatedNodes, edges), 0);
+        return updatedNodes;
+      });
     }
-  }, [updateNodeTrigger, setNodes, nodes, edges, saveToHistory]);
+  }, [updateNodeTrigger, setNodes]); // ✅ Only depend on updateNodeTrigger and setNodes
 
   // Listen for update edge trigger from parent
   useEffect(() => {
     if (updateEdgeTrigger) {
-      setEdges((eds) =>
-        eds.map((edge) => {
+      setEdges((eds) => {
+        const updatedEdges = eds.map((edge) => {
           if (edge.id === updateEdgeTrigger.edgeId) {
             const { newData } = updateEdgeTrigger;
             return { 
@@ -227,11 +231,13 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
             };
           }
           return edge;
-        })
-      );
-      saveToHistory(nodes, edges);
+        });
+        // Save to history after state update
+        setTimeout(() => saveToHistory(nodes, updatedEdges), 0);
+        return updatedEdges;
+      });
     }
-  }, [updateEdgeTrigger, setEdges, nodes, edges, saveToHistory]);
+  }, [updateEdgeTrigger, setEdges]); // ✅ Only depend on updateEdgeTrigger and setEdges
 
   const onConnect = useCallback(
     (connection: Connection) => {
