@@ -52,7 +52,7 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
   // No selection
   if (!selectedNode && !selectedEdge) {
     return (
-      <div className="w-80 bg-white border-l border-gray-300" style={{ height: 'calc(100vh - 200px)' }}>
+      <div className="w-80 bg-white border-l border-gray-300" style={{ height: 'calc(100vh - 180px)' }}>
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <Settings className="w-5 h-5" />
@@ -85,7 +85,7 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
     };
 
     return (
-      <div className="w-80 bg-white border-l border-gray-300" style={{ height: 'calc(100vh - 200px)' }}>
+      <div className="w-80 bg-white border-l border-gray-300" style={{ height: 'calc(100vh - 180px)' }}>
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
           <h3 className="font-bold text-lg flex items-center gap-2">
             <Settings className="w-5 h-5" />
@@ -111,7 +111,7 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
                 value={edgeFormData.label || ''}
                 onChange={(e) => handleEdgeChange('label', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="예: Yes, No, Error"
+                placeholder="예: 성공, 실패, ACTIVE"
               />
             </div>
 
@@ -135,35 +135,35 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
             {/* Animated */}
             <div className="border-t pt-4">
               <label className="block text-xs font-semibold text-gray-600 mb-2">
-                실행 방식 (비동기/동기)
+                애니메이션 (플로우 진행)
               </label>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleEdgeChange('animated', true)}
                   className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
                     edgeFormData.animated
-                      ? 'bg-purple-500 border-purple-600 text-white shadow-lg'
-                      : 'bg-white border-gray-300 text-gray-700 hover:border-purple-300'
+                      ? 'bg-blue-500 border-blue-600 text-white shadow-lg'
+                      : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
                   }`}
                 >
-                  <div className="font-bold mb-1">⚡ 비동기</div>
+                  <div className="font-bold mb-1">✅ 활성</div>
                   <div className="text-xs opacity-90">움직이는 점선</div>
                 </button>
                 <button
                   onClick={() => handleEdgeChange('animated', false)}
                   className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
                     !edgeFormData.animated
-                      ? 'bg-blue-500 border-blue-600 text-white shadow-lg'
-                      : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300'
+                      ? 'bg-gray-500 border-gray-600 text-white shadow-lg'
+                      : 'bg-white border-gray-300 text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <div className="font-bold mb-1">🔒 동기</div>
+                  <div className="font-bold mb-1">⏸️ 비활성</div>
                   <div className="text-xs opacity-90">일반 실선</div>
                 </button>
               </div>
-              <div className="mt-3 p-3 bg-gray-50 rounded text-xs text-gray-600">
-                <p><strong className="text-purple-600">비동기:</strong> API 호출, 백그라운드 작업</p>
-                <p className="mt-1"><strong className="text-blue-600">동기:</strong> 즉시 실행, 순차 처리</p>
+              <div className="mt-3 p-3 bg-blue-50 rounded text-xs text-gray-600">
+                <p><strong className="text-blue-600">활성:</strong> Happy Path, 주요 플로우</p>
+                <p className="mt-1"><strong className="text-gray-600">비활성:</strong> 보조 플로우, 에러 경로</p>
               </div>
             </div>
 
@@ -172,16 +172,6 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
               <p><strong>Edge ID:</strong> {selectedEdge.id}</p>
               <p className="mt-1"><strong>From:</strong> {selectedEdge.source}</p>
               <p className="mt-1"><strong>To:</strong> {selectedEdge.target}</p>
-            </div>
-
-            {/* Guide */}
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs">
-              <p className="font-semibold text-blue-800 mb-2">💡 선 스타일 가이드</p>
-              <ul className="space-y-1 text-blue-700">
-                <li>• <strong>애니메이션 ON:</strong> 비동기 작업, 진행 중</li>
-                <li>• <strong>애니메이션 OFF:</strong> 동기 작업, 완료됨</li>
-                <li>• <strong>레이블:</strong> 조건 분기 표시 (Yes/No)</li>
-              </ul>
             </div>
           </div>
         </div>
@@ -197,7 +187,7 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
   };
 
   return (
-    <div className="w-80 bg-white border-l border-gray-300" style={{ height: 'calc(100vh - 200px)' }}>
+    <div className="w-80 bg-white border-l border-gray-300" style={{ height: 'calc(100vh - 180px)' }}>
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
         <h3 className="font-bold text-lg flex items-center gap-2">
           <Settings className="w-5 h-5" />
@@ -213,12 +203,12 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
       </div>
       <div className="p-4 overflow-y-auto h-[calc(100%-60px)]">
         <div className="space-y-4">
-          {/* Node Type */}
+          {/* Node Type Badge */}
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">
               노드 타입
             </label>
-            <div className="px-3 py-2 bg-gray-100 rounded text-sm">
+            <div className="px-3 py-2 bg-gray-100 rounded text-sm font-medium">
               {selectedNode.type === 'process' && '🔹 프로세스'}
               {selectedNode.type === 'decision' && '🔷 결정/분기'}
               {selectedNode.type === 'note' && '📝 노트'}
@@ -240,186 +230,121 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
             />
           </div>
 
-          {/* Group Color (for group nodes) */}
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              설명
+            </label>
+            <input
+              type="text"
+              value={formData.description || ''}
+              onChange={(e) => handleChange('description', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="노드 설명"
+            />
+          </div>
+
+          {/* Group Node Settings */}
           {selectedNode.type === 'group' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                배경 색상
-              </label>
-              <select
-                value={formData.color || 'lightblue'}
-                onChange={(e) => handleChange('color', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="lightblue">연한 파란색</option>
-                <option value="lightgreen">연한 초록색</option>
-                <option value="lightpurple">연한 보라색</option>
-                <option value="lightpink">연한 분홍색</option>
-                <option value="lightyellow">연한 노란색</option>
-                <option value="lightgray">연한 회색</option>
-                <option value="lightcyan">연한 청록색</option>
-                <option value="lightindigo">연한 남색</option>
-              </select>
-              <div className="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
-                💡 그룹 노드는 다른 노드들을 감싸는 배경 역할을 합니다. 노드를 그룹 안으로 드래그하세요.
-              </div>
-            </div>
-          )}
-
-          {/* Icon (for process nodes) */}
-          {selectedNode.type === 'process' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                아이콘 (이모지)
-              </label>
-              <input
-                type="text"
-                value={formData.icon || ''}
-                onChange={(e) => handleChange('icon', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="예: 🔌"
-                maxLength={2}
-              />
-            </div>
-          )}
-
-          {/* Section (for process nodes) */}
-          {selectedNode.type === 'process' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                섹션 (색상)
-              </label>
-              <select
-                value={formData.section || 'console'}
-                onChange={(e) => handleChange('section', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="console">콘솔 (파란색)</option>
-                <option value="api-direct">API 호출 (청록색)</option>
-                <option value="next-platform">NEXT 플랫폼 (초록색)</option>
-                <option value="billing-platform">빌링 플랫폼 (보라색)</option>
-                <option value="openstack">OpenStack (주황색)</option>
-                <option value="fail">실패/에러 (빨간색)</option>
-              </select>
-            </div>
-          )}
-
-          {/* Status */}
-          {selectedNode.type === 'process' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                상태 표시
-              </label>
-              <input
-                type="text"
-                value={formData.status || ''}
-                onChange={(e) => handleChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="예: Status: BUILD"
-              />
-            </div>
-          )}
-
-          {/* Audit Log */}
-          {selectedNode.type === 'process' && (
             <div className="border-t pt-4">
               <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                📝 감사 로그 (Audit)
+                📦 그룹 설정
               </h4>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    로그 메시지
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.auditLog || ''}
-                    onChange={(e) => handleChange('auditLog', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder='예: Audit: "Create Try" 기록'
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    로그 상태
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.auditStatus || ''}
-                    onChange={(e) => handleChange('auditStatus', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="예: Attempt, Success, Fail"
-                  />
-                </div>
+              <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
+                💡 그룹 노드는 다른 노드들을 감싸는 배경 역할을 합니다. 드래그하여 크기를 조절하세요.
               </div>
             </div>
           )}
 
-          {/* Billing */}
+          {/* Process Node Settings */}
           {selectedNode.type === 'process' && (
+            <>
+              {/* Icon */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  아이콘 (이모지)
+                </label>
+                <input
+                  type="text"
+                  value={formData.icon || ''}
+                  onChange={(e) => handleChange('icon', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="예: 🔌"
+                  maxLength={2}
+                />
+              </div>
+
+              {/* Section (Category) */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  카테고리 (색상)
+                </label>
+                <select
+                  value={formData.section || 'business-logic'}
+                  onChange={(e) => handleChange('section', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="user-action">👤 사용자 액션 (파란색)</option>
+                  <option value="business-logic">⚙️ 비즈니스 로직 (초록색)</option>
+                  <option value="billing-logic">💰 빌링 로직 (보라색)</option>
+                  <option value="error">❌ 실패/에러 (빨간색)</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          {/* Decision Node Settings */}
+          {selectedNode.type === 'decision' && (
             <div className="border-t pt-4">
               <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                💰 과금 처리 (Billing)
+                🔷 분기 설정
               </h4>
-              <div className="space-y-2">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    과금 메시지
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.billing || ''}
-                    onChange={(e) => handleChange('billing', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="예: [START] 과금 시작"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">
-                    과금 아이콘
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.billingIcon || ''}
-                    onChange={(e) => handleChange('billingIcon', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="💰"
-                    maxLength={2}
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  성공 레이블
+                </label>
+                <input
+                  type="text"
+                  value={formData.yesLabel || '성공'}
+                  onChange={(e) => handleChange('yesLabel', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="예: 성공, ACTIVE, Yes"
+                />
+              </div>
+              <div className="mt-2">
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  실패 레이블
+                </label>
+                <input
+                  type="text"
+                  value={formData.noLabel || '실패'}
+                  onChange={(e) => handleChange('noLabel', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  placeholder="예: 실패, ERROR, No"
+                />
               </div>
             </div>
           )}
 
-          {/* Note */}
-          {selectedNode.type === 'process' && (
-            <div className="border-t pt-4">
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                추가 노트
-              </label>
-              <textarea
-                value={formData.note || ''}
-                onChange={(e) => handleChange('note', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="추가 설명이나 중요 사항"
-                rows={3}
-              />
-            </div>
-          )}
-
-          {/* Note Content (for note nodes) */}
+          {/* Note Node Settings */}
           {selectedNode.type === 'note' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                노트 내용
-              </label>
-              <textarea
-                value={formData.content || ''}
-                onChange={(e) => handleChange('content', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="상세 설명..."
-                rows={6}
-              />
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                📝 노트 설정
+              </h4>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  이모지
+                </label>
+                <input
+                  type="text"
+                  value={formData.emoji || '📝'}
+                  onChange={(e) => handleChange('emoji', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="📊"
+                  maxLength={2}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -428,6 +353,18 @@ export function PropertiesPanel({ selectedNode, selectedEdge, onUpdateNode, onUp
         <div className="mt-6 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
           <p><strong>Node ID:</strong> {selectedNode.id}</p>
           <p className="mt-1"><strong>Position:</strong> ({Math.round(selectedNode.position.x)}, {Math.round(selectedNode.position.y)})</p>
+        </div>
+
+        {/* Guide */}
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs">
+          <p className="font-semibold text-blue-800 mb-2">💡 노드 편집 가이드</p>
+          <ul className="space-y-1 text-blue-700">
+            <li>• 레이블: 노드의 주요 텍스트</li>
+            <li>• 설명: 상세 설명 (서브 텍스트)</li>
+            <li>• 카테고리: 노드 색상 결정</li>
+            <li>• 드래그로 이동 가능</li>
+            <li>• Delete 키로 삭제</li>
+          </ul>
         </div>
       </div>
     </div>

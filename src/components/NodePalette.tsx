@@ -6,183 +6,223 @@ interface NodePaletteProps {
 }
 
 const nodeTemplates = [
-  // 콘솔 (FE + User)
+  // 1. 사용자 액션
   {
-    category: '콘솔 (Console)',
+    category: '👤 사용자 액션',
     color: 'bg-blue-100 border-blue-500',
     nodes: [
       {
         type: 'process',
         data: {
-          label: '사용자 액션',
-          section: 'console',
-          icon: '👤',
+          label: '👤 사용자 요청',
+          section: 'user-action',
+          icon: '🚀',
+          description: '사용자 액션'
         },
       },
       {
         type: 'process',
         data: {
-          label: 'FE 처리',
-          section: 'console',
-          icon: '💻',
+          label: '👤 사용자 입력',
+          section: 'user-action',
+          icon: '✍️',
+          description: '사용자 입력'
         },
       },
     ],
   },
-  // API 직접 호출
+
+  // 2. 비즈니스 로직
   {
-    category: 'API 호출',
-    color: 'bg-cyan-100 border-cyan-500',
-    nodes: [
-      {
-        type: 'process',
-        data: {
-          label: 'API 직접 호출',
-          section: 'api-direct',
-          icon: '📡',
-        },
-      },
-    ],
-  },
-  // NEXT 플랫폼
-  {
-    category: 'NEXT 플랫폼',
+    category: '⚙️ 비즈니스 로직',
     color: 'bg-green-100 border-green-500',
     nodes: [
       {
         type: 'process',
         data: {
-          label: 'NEXT API',
-          section: 'next-platform',
-          icon: '🔌',
+          label: '⚙️ 비즈니스 처리',
+          section: 'business-logic',
+          icon: '🔧',
+          description: 'NEXT 플랫폼 로직'
         },
       },
       {
         type: 'process',
         data: {
-          label: 'NEXT 비즈니스 로직',
-          section: 'next-platform',
-          icon: '⚙️',
+          label: '🔐 인증 처리',
+          section: 'business-logic',
+          icon: '✅',
+          description: '인증/권한 확인'
         },
       },
       {
         type: 'process',
         data: {
-          label: 'NEXT 후처리',
-          section: 'next-platform',
+          label: '📁 리소스 생성',
+          section: 'business-logic',
+          icon: '✨',
+          description: '리소스 생성/관리'
+        },
+      },
+      {
+        type: 'process',
+        data: {
+          label: '↩️ 롤백 처리',
+          section: 'business-logic',
           icon: '🔄',
+          description: '실패 시 롤백'
         },
       },
     ],
   },
-  // 빌링 플랫폼
+
+  // 3. 빌링 로직
   {
-    category: '빌링 플랫폼',
+    category: '💰 빌링 로직',
     color: 'bg-purple-100 border-purple-500',
     nodes: [
       {
         type: 'process',
         data: {
-          label: '과금 시작',
-          section: 'billing-platform',
-          icon: '💰',
+          label: '💰 과금 시작',
+          section: 'billing-logic',
+          icon: '▶️',
+          description: '빌링 시작'
         },
       },
       {
         type: 'process',
         data: {
-          label: '과금 종료',
-          section: 'billing-platform',
-          icon: '💸',
-        },
-      },
-      {
-        type: 'process',
-        data: {
-          label: '빌링 처리',
-          section: 'billing-platform',
+          label: '💰 빌링 처리',
+          section: 'billing-logic',
           icon: '💳',
-        },
-      },
-    ],
-  },
-  // OpenStack
-  {
-    category: 'OpenStack',
-    color: 'bg-orange-100 border-orange-500',
-    nodes: [
-      {
-        type: 'process',
-        data: {
-          label: 'OpenStack 작업',
-          section: 'openstack',
-          icon: '☁️',
+          description: '과금 진행 중'
         },
       },
       {
         type: 'process',
         data: {
-          label: 'OpenStack 상태 확인',
-          section: 'openstack',
-          icon: '🔍',
+          label: '💰 과금 종료',
+          section: 'billing-logic',
+          icon: '⏹️',
+          description: '빌링 종료'
+        },
+      },
+      {
+        type: 'process',
+        data: {
+          label: '💳 최종 정산',
+          section: 'billing-logic',
+          icon: '🧾',
+          description: '사용료 계산'
         },
       },
     ],
   },
-  // 실패/에러
+
+  // 4. 실패/에러
   {
-    category: '실패 / 에러',
+    category: '❌ 실패 / 에러',
     color: 'bg-red-100 border-red-500',
     nodes: [
       {
         type: 'process',
         data: {
-          label: '에러 처리',
-          section: 'fail',
-          icon: '❌',
+          label: '❌ 에러 발생',
+          section: 'error',
+          icon: '🚫',
+          description: '실패 처리'
         },
       },
       {
         type: 'process',
         data: {
-          label: '롤백',
-          section: 'fail',
-          icon: '↩️',
+          label: '❌ 검증 실패',
+          section: 'error',
+          icon: '⚠️',
+          description: '유효성 검증 실패'
+        },
+      },
+      {
+        type: 'process',
+        data: {
+          label: '❌ 시스템 오류',
+          section: 'error',
+          icon: '💥',
+          description: '시스템 에러'
         },
       },
     ],
   },
-  // 특수 노드
+
+  // 5. 특수 노드 - 검증/분기
   {
-    category: '특수 노드',
+    category: '🔷 검증 / 분기',
     color: 'bg-yellow-100 border-yellow-500',
     nodes: [
       {
         type: 'decision',
         data: {
           label: '검증/분기',
-          section: 'next-platform',
+          description: '조건 분기',
+          yesLabel: '성공',
+          noLabel: '실패'
+        },
+      },
+      {
+        type: 'decision',
+        data: {
+          label: '상태 확인',
+          description: 'ACTIVE?',
+          yesLabel: 'ACTIVE',
+          noLabel: 'ERROR'
+        },
+      },
+    ],
+  },
+
+  // 6. 중요 노트
+  {
+    category: '📝 중요 노트',
+    color: 'bg-orange-100 border-orange-500',
+    nodes: [
+      {
+        type: 'note',
+        data: {
+          label: '📝 감사 로그',
+          description: '이벤트 기록',
+          emoji: '📊'
         },
       },
       {
         type: 'note',
         data: {
-          label: '중요 노트',
-          content: '여기에 상세 설명을 입력하세요.',
+          label: '⚠️ 중요 정책',
+          description: '비즈니스 룰',
+          emoji: '💡'
+        },
+      },
+      {
+        type: 'note',
+        data: {
+          label: '💰 과금 정책',
+          description: '빌링 관련 주의사항',
+          emoji: '💰'
         },
       },
     ],
   },
-  // 그룹/섹션
+
+  // 7. 그룹 영역
   {
-    category: '그룹 / 섹션',
+    category: '📦 그룹 영역',
     color: 'bg-gray-100 border-gray-400',
     nodes: [
       {
         type: 'group',
         data: {
           label: '그룹 영역',
-          color: 'lightblue',
+          description: '여러 노드를 묶는 그룹'
         },
       },
     ],
@@ -210,7 +250,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
   }
 
   return (
-    <div className="w-64 bg-white border-r border-gray-300 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
+    <div className="w-64 bg-white border-r border-gray-300 overflow-y-auto" style={{ height: 'calc(100vh - 180px)' }}>
       <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
         <h3 className="font-bold text-lg flex items-center gap-2">
           <Plus className="w-5 h-5" />
@@ -249,7 +289,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
         ))}
       </div>
 
-      <div className="mt-6 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
+      <div className="mt-6 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 mx-4 mb-4">
         <p className="font-semibold mb-1">💡 사용법</p>
         <ul className="space-y-1">
           <li>• 버튼 클릭으로 노드 추가</li>

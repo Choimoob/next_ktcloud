@@ -51,301 +51,64 @@ interface HistoryState {
   edges: Edge[];
 }
 
-export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSelect, onNodesChange, onEdgesChange, addNodeTrigger, updateNodeTrigger, updateEdgeTrigger, registerUndoRedo }: FlowDiagramProps) {
+export function FlowDiagram({ 
+  selectedNode, 
+  selectedEdge, 
+  onNodeSelect, 
+  onEdgeSelect, 
+  onNodesChange, 
+  onEdgesChange,
+  addNodeTrigger,
+  updateNodeTrigger,
+  updateEdgeTrigger,
+  registerUndoRedo
+}: FlowDiagramProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
-  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
-  const [selectedEdges, setSelectedEdges] = useState<Edge[]>([]);
-  
+
   // History for undo/redo
   const [history, setHistory] = useState<HistoryState[]>([{ nodes: initialNodes, edges: initialEdges }]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const isUndoRedoAction = useRef(false);
-  const nodeChangeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Save current state to history
-  const saveToHistory = useCallback((newNodes: Node[], newEdges: Edge[]) => {
-    if (isUndoRedoAction.current) {
-      isUndoRedoAction.current = false;
-      return;
-    }
-    
-    setHistory((prev) => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push({ nodes: newNodes, edges: newEdges });
-      // Limit history to 50 steps
-      if (newHistory.length > 50) {
-        newHistory.shift();
+  // Save to history (throttled)
+  const saveToHistory = useCallback(() => {
+    setTimeout(() => {
+      setHistory((prev) => {
+        const newHistory = prev.slice(0, historyIndex + 1);
+        newHistory.push({ nodes, edges });
         return newHistory;
-      }
-      return newHistory;
-    });
-    setHistoryIndex((prev) => Math.min(prev + 1, 49));
+      });
+      setHistoryIndex((prev) => prev + 1);
+    }, 0);
   }, [historyIndex]);
 
-  // Custom nodes change handler with debounced history save
-  const handleNodesChange = useCallback((changes: any[]) => {
-    onNodesChangeInternal(changes);
-    
-    // Debounce history save for drag operations
-    const hasDragChange = changes.some((change: any) => 
-      change.type === 'position' && change.dragging === false
-    );
-    
-    if (hasDragChange) {
-      if (nodeChangeTimerRef.current) {
-        clearTimeout(nodeChangeTimerRef.current);
-      }
-      nodeChangeTimerRef.current = setTimeout(() => {
-        // Use nodes state directly via ref pattern
-        saveToHistory(nodes, edges);
-      }, 300);
-    }
-  }, [onNodesChangeInternal, nodes, edges, saveToHistory]);
-
-  // Custom edges change handler
-  const handleEdgesChange = useCallback((changes: any[]) => {
-    onEdgesChangeInternal(changes);
-  }, [onEdgesChangeInternal]);
-
   // Undo
-  const handleUndo = useCallback(() => {
+  const undo = useCallback(() => {
     if (historyIndex > 0) {
-      const newIndex = historyIndex - 1;
-      const state = history[newIndex];
-      isUndoRedoAction.current = true;
-      setNodes(state.nodes);
-      setEdges(state.edges);
-      setHistoryIndex(newIndex);
+      const prevState = history[historyIndex - 1];
+      setNodes(prevState.nodes);
+      setEdges(prevState.edges);
+      setHistoryIndex(historyIndex - 1);
+      onNodesChange(prevState.nodes);
+      onEdgesChange(prevState.edges);
     }
-  }, [historyIndex, history, setNodes, setEdges]);
+  }, [historyIndex, history, setNodes, setEdges, onNodesChange, onEdgesChange]);
 
   // Redo
-  const handleRedo = useCallback(() => {
+  const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
-      const newIndex = historyIndex + 1;
-      const state = history[newIndex];
-      isUndoRedoAction.current = true;
-      setNodes(state.nodes);
-      setEdges(state.edges);
-      setHistoryIndex(newIndex);
+      const nextState = history[historyIndex + 1];
+      setNodes(nextState.nodes);
+      setEdges(nextState.edges);
+      setHistoryIndex(historyIndex + 1);
+      onNodesChange(nextState.nodes);
+      onEdgesChange(nextState.edges);
     }
-  }, [historyIndex, history, setNodes, setEdges]);
+  }, [historyIndex, history, setNodes, setEdges, onNodesChange, onEdgesChange]);
 
-  // Handle selection change callback
-  const handleSelectionChange = useCallback(({ nodes, edges }: { nodes: Node[], edges: Edge[] }) => {
-    setSelectedNodes(nodes);
-    setSelectedEdges(edges);
-  }, []);
-
-  // Notify parent of nodes changes via useEffect to avoid render-time state updates
-  useEffect(() => {
-    onNodesChange(nodes);
-  }, [nodes, onNodesChange]);
-
-  // Notify parent of edges changes via useEffect to avoid render-time state updates
-  useEffect(() => {
-    onEdgesChange(edges);
-  }, [edges, onEdgesChange]);
-
-  // Listen for add node trigger from parent
-  useEffect(() => {
-    if (addNodeTrigger) {
-      const newNode: Node = {
-        id: `node-${Date.now()}`,
-        type: addNodeTrigger.nodeData.type,
-        position: { 
-          x: Math.random() * 400 + 200, 
-          y: Math.random() * 400 + 150 
-        },
-        data: addNodeTrigger.nodeData.data,
-        style: {
-          ...(addNodeTrigger.nodeData.type === 'group' ? {
-            width: 400,
-            height: 300,
-            zIndex: -1,
-          } : addNodeTrigger.nodeData.type === 'process' ? {
-            width: 250,
-            height: 150,
-          } : addNodeTrigger.nodeData.type === 'decision' ? {
-            width: 160,
-            height: 160,
-          } : addNodeTrigger.nodeData.type === 'note' ? {
-            width: 300,
-            height: 180,
-          } : {}),
-        },
-      };
-      setNodes((nds) => {
-        const updatedNodes = [...nds, newNode];
-        // Save to history after state update
-        setTimeout(() => saveToHistory(updatedNodes, edges), 0);
-        return updatedNodes;
-      });
-    }
-  }, [addNodeTrigger, setNodes]); // ✅ Only depend on addNodeTrigger and setNodes
-
-  // Listen for update node trigger from parent
-  useEffect(() => {
-    if (updateNodeTrigger) {
-      setNodes((nds) => {
-        const updatedNodes = nds.map((node) => {
-          if (node.id === updateNodeTrigger.nodeId) {
-            return { ...node, data: { ...node.data, ...updateNodeTrigger.newData } };
-          }
-          return node;
-        });
-        // Save to history after state update
-        setTimeout(() => saveToHistory(updatedNodes, edges), 0);
-        return updatedNodes;
-      });
-    }
-  }, [updateNodeTrigger, setNodes]); // ✅ Only depend on updateNodeTrigger and setNodes
-
-  // Listen for update edge trigger from parent
-  useEffect(() => {
-    if (updateEdgeTrigger) {
-      setEdges((eds) => {
-        const updatedEdges = eds.map((edge) => {
-          if (edge.id === updateEdgeTrigger.edgeId) {
-            const { newData } = updateEdgeTrigger;
-            return { 
-              ...edge, 
-              label: newData.label,
-              animated: newData.animated,
-              type: newData.type,
-              style: newData.style,
-              labelStyle: {
-                fill: '#374151',
-                fontSize: 10,
-                fontWeight: 600,
-              },
-              labelBgStyle: {
-                fill: '#f3f4f6',
-                stroke: '#9ca3af',
-                strokeWidth: 1,
-                fillOpacity: 0.95,
-              },
-              labelBgPadding: [6, 8] as [number, number],
-              labelBgBorderRadius: 4,
-            };
-          }
-          return edge;
-        });
-        // Save to history after state update
-        setTimeout(() => saveToHistory(nodes, updatedEdges), 0);
-        return updatedEdges;
-      });
-    }
-  }, [updateEdgeTrigger, setEdges]); // ✅ Only depend on updateEdgeTrigger and setEdges
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      const newEdge = {
-        ...connection,
-        id: `edge-${Date.now()}`,
-        labelStyle: {
-          fill: '#374151',
-          fontSize: 10,
-          fontWeight: 600,
-        },
-        labelBgStyle: {
-          fill: '#f3f4f6',
-          stroke: '#9ca3af',
-          strokeWidth: 1,
-          fillOpacity: 0.95,
-        },
-        labelBgPadding: [6, 8] as [number, number],
-        labelBgBorderRadius: 4,
-      };
-      setEdges((eds) => addEdge(newEdge, eds));
-      saveToHistory(nodes, [...edges, newEdge]);
-    },
-    [setEdges, nodes, edges, saveToHistory]
-  );
-
-  const onNodeClick = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      onNodeSelect(node);
-    },
-    [onNodeSelect]
-  );
-
-  const onEdgeClick = useCallback(
-    (_event: React.MouseEvent, edge: Edge) => {
-      onEdgeSelect(edge);
-    },
-    [onEdgeSelect]
-  );
-
-  const onPaneClick = useCallback(() => {
-    onNodeSelect(null);
-    onEdgeSelect(null);
-  }, [onNodeSelect, onEdgeSelect]);
-
-  // Update selected node
-  const updateNode = useCallback((nodeId: string, newData: any) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          return { ...node, data: { ...node.data, ...newData } };
-        }
-        return node;
-      })
-    );
-    saveToHistory(nodes, edges);
-  }, [setNodes, nodes, edges, saveToHistory]);
-
-  // Delete selected node
-  const deleteSelectedNode = useCallback(() => {
-    if (selectedNode) {
-      setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-      setEdges((eds) => 
-        eds.filter((edge) => 
-          edge.source !== selectedNode.id && edge.target !== selectedNode.id
-        )
-      );
-      onNodeSelect(null);
-      saveToHistory(nodes.filter((node) => node.id !== selectedNode.id), edges.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
-    }
-  }, [selectedNode, setNodes, setEdges, onNodeSelect, nodes, edges, saveToHistory]);
-
-  // Delete multiple selected nodes
-  const deleteMultipleNodes = useCallback(() => {
-    if (selectedNodes.length > 0) {
-      const selectedNodeIds = selectedNodes.map(n => n.id);
-      setNodes((nds) => nds.filter((node) => !selectedNodeIds.includes(node.id)));
-      setEdges((eds) => 
-        eds.filter((edge) => 
-          !selectedNodeIds.includes(edge.source) && !selectedNodeIds.includes(edge.target)
-        )
-      );
-      onNodeSelect(null);
-      saveToHistory(nodes.filter((node) => !selectedNodeIds.includes(node.id)), edges.filter((edge) => !selectedNodeIds.includes(edge.source) && !selectedNodeIds.includes(edge.target)));
-    }
-  }, [selectedNodes, setNodes, setEdges, onNodeSelect, nodes, edges, saveToHistory]);
-
-  // Keyboard shortcuts
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (selectedNodes.length > 1) {
-        deleteMultipleNodes();
-      } else {
-        deleteSelectedNode();
-      }
-    } else if (event.key === 'z' && event.ctrlKey) {
-      handleUndo();
-    } else if (event.key === 'y' && event.ctrlKey) {
-      handleRedo();
-    }
-  }, [deleteSelectedNode, deleteMultipleNodes, selectedNodes, handleUndo, handleRedo]);
-
-  // Save/Load functions
-  const handleSave = useCallback(() => {
-    const data = {
-      nodes,
-      edges,
-    };
+  // Save to JSON file
+  const saveToFile = useCallback(() => {
+    const data = { nodes, edges };
     const dataStr = JSON.stringify(data, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -356,58 +119,161 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
     URL.revokeObjectURL(url);
   }, [nodes, edges]);
 
-  const handleLoad = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target?.result as string);
-          setNodes(data.nodes || []);
-          setEdges(data.edges || []);
-          onNodeSelect(null);
-          onEdgeSelect(null);
-        } catch (error) {
-          alert('파일을 불러오는데 실패했습니다.');
-        }
-      };
-      reader.readAsText(file);
-    }
-  }, [setNodes, setEdges, onNodeSelect, onEdgeSelect]);
-
-  // Register undo, redo, and save functions with parent
+  // Register undo/redo functions
   useEffect(() => {
     if (registerUndoRedo) {
-      registerUndoRedo(handleUndo, handleRedo, handleSave);
+      registerUndoRedo(undo, redo, saveToFile);
     }
-  }, [registerUndoRedo, handleUndo, handleRedo, handleSave]);
+  }, [undo, redo, saveToFile, registerUndoRedo]);
+
+  // Add node from palette trigger
+  useEffect(() => {
+    if (!addNodeTrigger) return;
+
+    const newNode: Node = {
+      id: `node-${Date.now()}`,
+      type: addNodeTrigger.nodeData.type,
+      position: { x: 300, y: 200 },
+      data: { ...addNodeTrigger.nodeData.data },
+      style: addNodeTrigger.nodeData.type === 'group' 
+        ? { width: 400, height: 300, zIndex: -1 }
+        : { width: 200, height: 100 }
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+  }, [addNodeTrigger, setNodes]);
+
+  // Update node from properties panel trigger
+  useEffect(() => {
+    if (!updateNodeTrigger) return;
+
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === updateNodeTrigger.nodeId) {
+          return { ...node, data: { ...node.data, ...updateNodeTrigger.newData } };
+        }
+        return node;
+      })
+    );
+  }, [updateNodeTrigger, setNodes]);
+
+  // Update edge from properties panel trigger
+  useEffect(() => {
+    if (!updateEdgeTrigger) return;
+
+    setEdges((eds) =>
+      eds.map((edge) => {
+        if (edge.id === updateEdgeTrigger.edgeId) {
+          return { ...edge, ...updateEdgeTrigger.newData };
+        }
+        return edge;
+      })
+    );
+  }, [updateEdgeTrigger, setEdges]);
+
+  // Sync nodes/edges to parent
+  useEffect(() => {
+    onNodesChange(nodes);
+  }, [nodes]);
+
+  useEffect(() => {
+    onEdgesChange(edges);
+  }, [edges]);
+
+  // Connect nodes
+  const onConnect = useCallback(
+    (params: Connection) => {
+      const newEdge = {
+        ...params,
+        id: `edge-${Date.now()}`,
+        animated: true,
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+      saveToHistory();
+    },
+    [setEdges, saveToHistory]
+  );
+
+  // Node click
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      onNodeSelect(node);
+      onEdgeSelect(null);
+    },
+    [onNodeSelect, onEdgeSelect]
+  );
+
+  // Edge click
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      onEdgeSelect(edge);
+      onNodeSelect(null);
+    },
+    [onEdgeSelect, onNodeSelect]
+  );
+
+  // Pane click (deselect)
+  const onPaneClick = useCallback(() => {
+    onNodeSelect(null);
+    onEdgeSelect(null);
+  }, [onNodeSelect, onEdgeSelect]);
+
+  // Delete selected node/edge
+  const handleDelete = useCallback(() => {
+    if (selectedNode) {
+      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+      setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+      onNodeSelect(null);
+      saveToHistory();
+    } else if (selectedEdge) {
+      setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+      onEdgeSelect(null);
+      saveToHistory();
+    }
+  }, [selectedNode, selectedEdge, setNodes, setEdges, onNodeSelect, onEdgeSelect, saveToHistory]);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      // Delete key
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        handleDelete();
+      }
+      // Undo: Ctrl+Z / Cmd+Z
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+      }
+      // Redo: Ctrl+Y / Cmd+Shift+Z
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.shiftKey && event.key === 'z'))) {
+        event.preventDefault();
+        redo();
+      }
+      // Save: Ctrl+S / Cmd+S
+      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        saveToFile();
+      }
+    },
+    [handleDelete, undo, redo, saveToFile]
+  );
 
   return (
-    <div 
-      className="w-full h-full border border-gray-300 rounded-lg bg-gray-50 relative"
-      onKeyDown={handleKeyDown as any}
-      tabIndex={0}
-    >
+    <div className="w-full h-full" onKeyDown={handleKeyDown} tabIndex={0}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={handleEdgesChange}
+        onNodesChange={onNodesChangeInternal}
+        onEdgesChange={onEdgesChangeInternal}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        defaultViewport={{ x: 50, y: 50, zoom: 0.2 }}
-        minZoom={0.05}
-        maxZoom={2}
         fitView
-        fitViewOptions={{ padding: 0.1, maxZoom: 0.25 }}
-        selectionOnDrag={true}
-        panOnDrag={[1, 2]}
-        selectionMode="partial"
-        multiSelectionKeyCode="Shift"
-        onSelectionChange={handleSelectionChange}
+        minZoom={0.1}
+        maxZoom={2}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
       >
         <Background />
         <Controls />
@@ -417,45 +283,24 @@ export function FlowDiagram({ selectedNode, selectedEdge, onNodeSelect, onEdgeSe
           pannable
         />
         
-        {/* Top Panel - Actions */}
-        <Panel position="top-right" className="flex gap-2">
-          {selectedNodes.length > 1 && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-purple-500 text-white rounded-lg shadow-lg">
-              <FolderOpen className="w-4 h-4" />
-              {selectedNodes.length}개 선택됨
-            </div>
-          )}
-          
-          {selectedNodes.length > 1 && (
+        {/* Delete Panel */}
+        {(selectedNode || selectedEdge) && (
+          <Panel position="top-right">
             <button
-              onClick={deleteMultipleNodes}
-              className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-lg"
+              onClick={handleDelete}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all shadow-lg"
             >
               <Trash2 className="w-4 h-4" />
-              모두 삭제
+              Delete 키로 삭제
             </button>
-          )}
-          
-          {selectedNode && selectedNodes.length <= 1 && (
-            <button
-              onClick={deleteSelectedNode}
-              className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-lg"
-            >
-              <Trash2 className="w-4 h-4" />
-              삭제 (Del)
-            </button>
-          )}
-        </Panel>
-        
-        {/* Info Panel - Multi-selection guide */}
-        <Panel position="top-left" className="bg-white rounded-lg shadow-lg p-3 text-xs max-w-xs">
-          <p className="font-semibold text-gray-800 mb-1">💡 다중 선택 방법</p>
-          <ul className="space-y-1 text-gray-600">
-            <li>• <strong>Shift + 클릭:</strong> 여러 노드 선택</li>
-            <li>• <strong>드래그:</strong> 영역으로 선택</li>
-            <li>• <strong>Delete 키:</strong> 선택 삭제</li>
-            <li>• <strong>마우스 휠/우클릭:</strong> 캔버스 이동</li>
-          </ul>
+          </Panel>
+        )}
+
+        {/* Info Panel */}
+        <Panel position="bottom-left">
+          <div className="bg-white px-4 py-2 rounded-lg shadow-lg text-xs text-gray-600 border border-gray-200">
+            <p><strong>노드:</strong> {nodes.length}개 | <strong>연결:</strong> {edges.length}개</p>
+          </div>
         </Panel>
       </ReactFlow>
     </div>

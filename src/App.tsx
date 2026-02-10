@@ -1,17 +1,15 @@
 import { useState, useRef } from 'react';
 import { FlowDiagram } from './components/FlowDiagram';
-import { SpecificationTable } from './components/SpecificationTable';
 import { NodePalette } from './components/NodePalette';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { JsonEditor } from './components/JsonEditor';
-import { FileText, Workflow, Code2, Download, Upload, Undo, Redo } from 'lucide-react';
+import { Code2, Download, Upload, Undo, Redo } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import type { Node, Edge } from '@xyflow/react';
 import { serverCreationFlowData } from './data/serverCreationFlow';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'diagram' | 'table'>('diagram');
-  const [showJsonEditor, setShowJsonEditor] = useState(false); // ✅ Start with JSON editor closed (viewing mode)
+  const [showJsonEditor, setShowJsonEditor] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   
@@ -151,212 +149,178 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
-        <h1 className="text-3xl font-bold text-gray-900">
-          NEXT 통합 서비스 흐름도
-        </h1>
-        <p className="text-gray-600 text-sm mt-1">
-          고객 여정부터 서비스 설정까지 - 편집 가능한 다이어그램
-        </p>
-      </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              NEXT 통합 서비스 흐름도
+            </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              고객 여정부터 빌링 처리까지 - 비즈니스 플로우 시각화 & 편집
+            </p>
+          </div>
 
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 px-6 py-2">
-        <div className="flex gap-2 items-center justify-between">
+          {/* Action Buttons */}
           <div className="flex gap-2">
             <button
-              onClick={() => setActiveTab('diagram')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-semibold transition-all ${
-                activeTab === 'diagram'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              onClick={handleUndo}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+              title="되돌리기 (Ctrl+Z)"
             >
-              <Workflow className="w-4 h-4" />
-              편집 모드
+              <Undo className="w-3.5 h-3.5" />
+              되돌리기
             </button>
             <button
-              onClick={() => setActiveTab('table')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg font-semibold transition-all ${
-                activeTab === 'table'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              onClick={handleRedo}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+              title="다시 실행 (Ctrl+Y)"
             >
-              <FileText className="w-4 h-4" />
-              명세표
+              <Redo className="w-3.5 h-3.5" />
+              다시 실행
             </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all"
+              title="JSON 파일로 저장"
+            >
+              <Download className="w-3.5 h-3.5" />
+              저장
+            </button>
+            <button
+              onClick={handleLoadClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-green-100 text-green-700 hover:bg-green-200 transition-all"
+              title="JSON 파일 불러오기"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              불러오기
+            </button>
+            <input
+              ref={loadInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleLoad}
+              className="hidden"
+            />
           </div>
-
-          {/* Action Buttons (only show in diagram mode) */}
-          {activeTab === 'diagram' && (
-            <div className="flex gap-2">
-              <button
-                onClick={handleUndo}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
-                title="되돌리기 (Ctrl+Z)"
-              >
-                <Undo className="w-3.5 h-3.5" />
-                되돌리기
-              </button>
-              <button
-                onClick={handleRedo}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
-                title="다시 실행 (Ctrl+Y)"
-              >
-                <Redo className="w-3.5 h-3.5" />
-                다시 실행
-              </button>
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all"
-                title="JSON 파일로 저장"
-              >
-                <Download className="w-3.5 h-3.5" />
-                저장
-              </button>
-              <button
-                onClick={handleLoadClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm bg-green-100 text-green-700 hover:bg-green-200 transition-all"
-                title="JSON 파일 불러오기"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                불러오기
-              </button>
-              <input
-                ref={loadInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleLoad}
-                className="hidden"
-              />
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Content */}
-      {activeTab === 'diagram' ? (
-        <div className="flex h-[calc(100vh-200px)]">
-          {/* Left Palette */}
-          <NodePalette onAddNode={handleAddNode} />
+      {/* Main Content */}
+      <div className="flex h-[calc(100vh-180px)]">
+        {/* Left Palette */}
+        <NodePalette onAddNode={handleAddNode} />
 
-          {/* Center: Diagram + JSON Editor (Resizable) */}
-          <div className="flex-1 flex flex-col">
-            {/* Toggle Button */}
-            <div className="bg-gray-100 px-4 py-2 flex items-center justify-between border-b border-gray-300">
-              <div className="text-sm text-gray-600">
-                {showJsonEditor ? '비주얼 + JSON 모드' : '비주얼 모드'}
-              </div>
-              <button
-                onClick={() => setShowJsonEditor(!showJsonEditor)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
-                  showJsonEditor
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                }`}
-              >
-                <Code2 className="w-4 h-4" />
-                {showJsonEditor ? 'JSON 숨기기' : 'JSON 에디터'}
-              </button>
+        {/* Center: Diagram + JSON Editor (Resizable) */}
+        <div className="flex-1 flex flex-col">
+          {/* Toggle Button */}
+          <div className="bg-gray-100 px-4 py-2 flex items-center justify-between border-b border-gray-300">
+            <div className="text-sm text-gray-600">
+              {showJsonEditor ? '비주얼 + JSON 모드' : '비주얼 모드'}
             </div>
-
-            {/* Resizable Panels */}
-            {showJsonEditor ? (
-              <PanelGroup direction="horizontal" className="flex-1">
-                {/* Diagram Panel */}
-                <Panel defaultSize={60} minSize={30}>
-                  <FlowDiagram
-                    selectedNode={selectedNode}
-                    selectedEdge={selectedEdge}
-                    onNodeSelect={setSelectedNode}
-                    onEdgeSelect={setSelectedEdge}
-                    onNodesChange={setNodes}
-                    onEdgesChange={setEdges}
-                    addNodeTrigger={addNodeTrigger}
-                    updateNodeTrigger={updateNodeTrigger}
-                    updateEdgeTrigger={updateEdgeTrigger}
-                    registerUndoRedo={registerUndoRedo}
-                  />
-                </Panel>
-
-                {/* Resize Handle */}
-                <PanelResizeHandle className="w-2 bg-gray-300 hover:bg-blue-500 transition-colors cursor-col-resize" />
-
-                {/* JSON Editor Panel */}
-                <Panel defaultSize={40} minSize={25}>
-                  <JsonEditor
-                    nodes={nodes}
-                    edges={edges}
-                    onImport={handleJsonImport}
-                  />
-                </Panel>
-              </PanelGroup>
-            ) : (
-              <FlowDiagram
-                selectedNode={selectedNode}
-                selectedEdge={selectedEdge}
-                onNodeSelect={setSelectedNode}
-                onEdgeSelect={setSelectedEdge}
-                onNodesChange={setNodes}
-                onEdgesChange={setEdges}
-                addNodeTrigger={addNodeTrigger}
-                updateNodeTrigger={updateNodeTrigger}
-                updateEdgeTrigger={updateEdgeTrigger}
-                registerUndoRedo={registerUndoRedo}
-              />
-            )}
+            <button
+              onClick={() => setShowJsonEditor(!showJsonEditor)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${
+                showJsonEditor
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+              }`}
+            >
+              <Code2 className="w-4 h-4" />
+              {showJsonEditor ? 'JSON 숨기기' : 'JSON 에디터'}
+            </button>
           </div>
 
-          {/* Right Properties Panel */}
-          <PropertiesPanel
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
-            onUpdateNode={handleUpdateNode}
-            onUpdateEdge={handleUpdateEdge}
-          />
-        </div>
-      ) : (
-        <div className="p-6">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-7xl mx-auto">
-            <SpecificationTable />
-          </div>
-        </div>
-      )}
+          {/* Resizable Panels */}
+          {showJsonEditor ? (
+            <PanelGroup direction="horizontal" className="flex-1">
+              {/* Diagram Panel */}
+              <Panel defaultSize={60} minSize={30}>
+                <FlowDiagram
+                  selectedNode={selectedNode}
+                  selectedEdge={selectedEdge}
+                  onNodeSelect={setSelectedNode}
+                  onEdgeSelect={setSelectedEdge}
+                  onNodesChange={setNodes}
+                  onEdgesChange={setEdges}
+                  addNodeTrigger={addNodeTrigger}
+                  updateNodeTrigger={updateNodeTrigger}
+                  updateEdgeTrigger={updateEdgeTrigger}
+                  registerUndoRedo={registerUndoRedo}
+                />
+              </Panel>
 
-      {/* Legend (only in diagram mode) */}
-      {activeTab === 'diagram' && (
-        <div className="bg-white border-t border-gray-200 px-6 py-4">
-          <div className="max-w-7xl mx-auto">
-            <h3 className="font-bold text-sm mb-3">📖 범례 (Legend) - 섹션 색상</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-blue-100 border-2 border-blue-500" />
-                <span className="text-sm font-medium">콘솔</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-cyan-100 border-2 border-cyan-500" />
-                <span className="text-sm font-medium">API 직접 호출</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-green-100 border-2 border-green-500" />
-                <span className="text-sm font-medium">NEXT 플랫폼</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-purple-100 border-2 border-purple-500" />
-                <span className="text-sm font-medium">빌링 플랫폼</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-orange-100 border-2 border-orange-500" />
-                <span className="text-sm font-medium">OpenStack</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-red-100 border-2 border-red-500" />
-                <span className="text-sm font-medium">실패/에러</span>
-              </div>
+              {/* Resize Handle */}
+              <PanelResizeHandle className="w-2 bg-gray-300 hover:bg-blue-500 transition-colors cursor-col-resize" />
+
+              {/* JSON Editor Panel */}
+              <Panel defaultSize={40} minSize={25}>
+                <JsonEditor
+                  nodes={nodes}
+                  edges={edges}
+                  onImport={handleJsonImport}
+                />
+              </Panel>
+            </PanelGroup>
+          ) : (
+            <FlowDiagram
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              onNodeSelect={setSelectedNode}
+              onEdgeSelect={setSelectedEdge}
+              onNodesChange={setNodes}
+              onEdgesChange={setEdges}
+              addNodeTrigger={addNodeTrigger}
+              updateNodeTrigger={updateNodeTrigger}
+              updateEdgeTrigger={updateEdgeTrigger}
+              registerUndoRedo={registerUndoRedo}
+            />
+          )}
+        </div>
+
+        {/* Right Properties Panel */}
+        <PropertiesPanel
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          onUpdateNode={handleUpdateNode}
+          onUpdateEdge={handleUpdateEdge}
+        />
+      </div>
+
+      {/* Legend */}
+      <div className="bg-white border-t border-gray-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <h3 className="font-bold text-sm mb-3">📖 범례 (Legend)</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-blue-100 border-2 border-blue-500" />
+              <span className="text-sm font-medium">사용자 액션</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-green-100 border-2 border-green-500" />
+              <span className="text-sm font-medium">비즈니스 로직</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-purple-100 border-2 border-purple-500" />
+              <span className="text-sm font-medium">빌링 로직</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-red-100 border-2 border-red-500" />
+              <span className="text-sm font-medium">실패/에러</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-yellow-100 border-2 border-yellow-500" />
+              <span className="text-sm font-medium">검증/분기</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-orange-100 border-2 border-orange-500" />
+              <span className="text-sm font-medium">중요 노트</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-gray-100 border-2 border-gray-400" />
+              <span className="text-sm font-medium">그룹 영역</span>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
